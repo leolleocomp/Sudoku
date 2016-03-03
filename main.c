@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <GL/glut.h>
+#include <sys/ioctl.h>
 
 
 /*-----------------------------------------------------------------------------
@@ -58,10 +59,15 @@
 /*-----------------------------------------------------------------------------
  *  VARIAVEIS
  *-----------------------------------------------------------------------------*/
+int linha=0, coluna=0;
+char sudoku[9][9];
 float win, aspecto;
 int largura, altura;
 
-int backup = 1;
+float largura_tela, altura_tela;
+float win_lagura =  16.0;
+float win_altura = 12.0;
+
 
 int tr_x=0, tr_y=0, tr_z=0; // TRANSLATE
 
@@ -76,23 +82,36 @@ float p_scale=1;
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  renderStrokeFontLetter
- *  Description:  
+ *  Description:  Função que recebe a fonte e um texto por parâmetro para ser exibido na
+ *		    tela usando fonte de linhas
  * =====================================================================================
  */
-void escreve(
-		float x,
-		float y,
-		float z,
-		char *letter) {
-
+void Escreve(float x, float y, char value)
+{
 	glPushMatrix();
-	glTranslatef(x, y ,0);
 	
+	//glLoadIdentity(); // reinicializa as transformações  
+	glTranslatef(3.2+x,2.1+y,0);	/* posiciona com base na matrix */
+	glScalef(0.008, 0.008, 0.008);  /* diminui o tamanho do fonte	*/
+	glLineWidth(2); 		/* define a espessura da linha 	*/
+	//temp = x+48; 			/* CONVERSÃO ASCII 		*/
+	glutStrokeCharacter(GLUT_STROKE_ROMAN,value);
+	
+	glPopMatrix();
+}
+
+void DesenhaNumeros()
+{
+	int x,y;
+	char temp=1;
 	glColor3f(PRETO);
 	
-	glutStrokeCharacter(GLUT_STROKE_ROMAN,'H');
-
-	glPopMatrix();
+	
+	for(x=0;x<9;x++)
+		for(y=0;y<9;y++)
+			if(sudoku[x][8-y] != -1)
+				Escreve(x,y,sudoku[x][8-y]);
+	
 }
 
 /* 
@@ -114,24 +133,26 @@ void DesenhaTabela()
 	p_scale = 1;
 	
 	// Desenha as linhas
-	for(i=-4; i<6; i++)
+	//for(i=-4; i<6; i++)
+	for(i=2; i<12; i++)
 	{
 		glBegin(GL_LINES);      
 			glColor3f( PRETO );
-			glVertex2f( -4 , i );
-		  	glVertex2f(  5 , i );       
+			glVertex2f( 3.0 , i );
+		  	glVertex2f(  12.0 , i );       
 		glEnd();    
-    	}
+	}
     	
     	// Desenha as colunas
-    	for(i=-4; i<6; i++)
+    	//for(i=-4; i<6; i++)
+    	for(i=3.5; i<13; i++)
 	{
 		// Desenha o poligono  
-		glBegin(GL_LINES);      
-			glColor3f( PRETO );
-			glVertex2f( i, -4 );
-		  	glVertex2f( i,  5 );       
-		glEnd();    
+			glBegin(GL_LINES);      
+				glColor3f( PRETO );
+				glVertex2f( i, 2 );
+			  	glVertex2f( i,  11 );       
+			glEnd();    
     	}
 }
 /* 
@@ -184,9 +205,12 @@ void Desenha(void)
 	glViewport(0, 0, largura, altura);
 	// Desenha a casa na Viewport 1                        
 	//DesenhaPoligono();
+	
+	// DESENHA AS LINHAS DA TABELA
 	DesenhaTabela();
 	
-	escreve(0,0,0,"1");
+	// DESENHA OS NUMEROS DA MATRIX SUDOKU
+	DesenhaNumeros();
 	
 	// Executa os comandos OpenGL 
 	glFlush();
@@ -199,7 +223,7 @@ void Desenha(void)
  * =====================================================================================
  */
 void AlteraTamanhoJanela(GLsizei w, GLsizei h)
-{
+{	printf("here\n");
 	// Evita a divisao por zero
 	if(h == 0) h = 1;
 	
@@ -214,7 +238,10 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 	
 	// Estabelece a janela de seleção (esquerda, direita, inferior, 
 	// superior) mantendo a proporção com a janela de visualização
-	gluOrtho2D (-win*aspecto, win*aspecto, -win, win);
+	//gluOrtho2D (-win*aspecto, win*aspecto, -win, win);
+	
+//	gluOrtho2D(-7.5f,8.5f,-5.5,6.5f);
+	gluOrtho2D(0.0f,16.0f,0.0f,12.0f);
 }
 
 /* 
@@ -227,11 +254,6 @@ void TecladoEspecial (int key, int x, int y)
 {
 	switch(key)
 	{
-		case GLUT_KEY_HOME:
-			glPopMatrix();
-			backup = 1;
-			p_scale =1;
-		break;
 		case GLUT_KEY_PAGE_UP:
 			p_scale = 1.5;
 		break;
@@ -258,19 +280,14 @@ void Teclado (unsigned char key, int x, int y)
 {
 	// 0       1      2
 	// RED - GREEN - BLUE
-	switch(key)
+	if( key>='0' && key<= '9')
 	{
-		case 'B':
-			c4[2] += 0.1;
-		break;
-		case 'b':
-			c4[2] -= 0.1;
-		break;
-		case 'V':
-			c2[1] += 0.1;
-		break;
-		case 'v':
-			c2[1] -= 0.1;
+		sudoku[linha][coluna] = key;
+	}
+	switch(key)
+	{	
+		case 127:
+			sudoku[linha][coluna] = -1;
 		break;
 		case 27:
 		case 'q':
@@ -278,6 +295,7 @@ void Teclado (unsigned char key, int x, int y)
 			exit(0);
 		break;
 	}
+	DesenhaNumeros();
 	glutPostRedisplay();
 }
 
@@ -289,15 +307,17 @@ void Teclado (unsigned char key, int x, int y)
  */
 void GerenciaMouse(int button, int state, int x, int y)
 {       
-	int linha, coluna, i;
-	printf("coluna[%d]linha[%d]\n",(int) (x-405)/70 ,(int) (y-36)/69 ); 
-	if (button == GLUT_RIGHT_BUTTON)
-	{
-
+	int i;
+	if (button == GLUT_RIGHT_BUTTON ){
 	}
 
-	if(button == GLUT_LEFT_BUTTON )
+	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
+		linha 	= (int)((x/largura_tela)-3);
+		coluna  = (int)((y/altura_tela)-1);
+		
+		//printf("coluna[%d]linha[%d]\n",(int) ((x-405)/70) ,(int) ((y-36)/69) ); 
+		printf("coluna[%d]linha[%d]\n", (int)((x/largura_tela)-3),(int)((y/altura_tela)-1)); 
 
 	}   
 
@@ -324,6 +344,8 @@ void Inicializa (void)
 	// Define a cor de fundo da janela de visualização como branca
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	win = 5.5f;
+	
+	//gluOrtho2D(-5.0f,5.0f,-5.0f,5.0f);
 }
  
 /* 
@@ -334,8 +356,23 @@ void Inicializa (void)
  */
 int main(int argc, char** argv)
 {
+	
+	
+	
 	// Init 
 	glutInit(&argc, argv);
+	
+	printf ("Pixel Dimensions: %d x %d \n",/*glutGet (GLUT_SCREEN_WIDTH_MM) / */glutGet (GLUT_SCREEN_WIDTH),
+            /*glutGet (GLUT_SCREEN_HEIGHT_MM) /*/ glutGet(GLUT_SCREEN_HEIGHT));
+	
+	printf ("Pixel Dimensions: %f x %f \n",/*glutGet (GLUT_SCREEN_WIDTH_MM) / */glutGet (GLUT_SCREEN_WIDTH)/16.0,
+            /*glutGet (GLUT_SCREEN_HEIGHT_MM) /*/ glutGet(GLUT_SCREEN_HEIGHT)/12.0);
+    printf("%d %d", altura,largura);
+    
+    largura_tela = glutGet (GLUT_SCREEN_WIDTH)/win_lagura;
+    altura_tela = glutGet(GLUT_SCREEN_HEIGHT)/win_altura;
+	
+	
        	
 	// Define do modo de operação da GLUT
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB); 
