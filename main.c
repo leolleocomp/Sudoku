@@ -1,3 +1,4 @@
+
 /*
  * =====================================================================================
  *
@@ -17,8 +18,10 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
-#include <GL/glut.h>
+#include <GL/freeglut.h>
+#include <GL/gl.h>
 #include <sys/ioctl.h>
+#include <string.h>
 
 
 /*-----------------------------------------------------------------------------
@@ -56,15 +59,12 @@
 #define AMARELO    1,1,0
 #define PRETO      0,0,0
 
-/*-----------------------------------------------------------------------------
- *  VARIAVEIS
- *-----------------------------------------------------------------------------*/
 int linha=0, coluna=0;
 char sudoku[9][9];
 float win, aspecto;
 int largura, altura;
 
-float largura_tela, altura_tela;
+float du_largura, du_altura;
 float win_lagura =  16.0;
 float win_altura = 12.0;
 
@@ -78,11 +78,22 @@ float c1[3]={PRETO},
 
 float p_scale=1;
 
+/*-----------------------------------------------------------------------------
+ * VARI√ÅVEIS ASSOCIADAS AO MENU INCIAL
+ *-----------------------------------------------------------------------------*/
+
+int      st_x = 4, 		// posi√ß√£o x inicial do menu
+	 st_y = 8, 		// posi√ß√£o y inicial do menu
+	 largura_bloco = 8,	// largura de cada box do menu
+	 box_select    = 0;	// indica qual box do menu est√° atualmente selecionada
+
+double   altura_bloco = 1.0, 	// altura de cada box do menu 
+	 space = 0.5;		// espa√ßo entre blocos
 
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  renderStrokeFontLetter
- *  Description:  FunÁ„o que recebe a fonte e um texto por par‚metro para ser exibido na
+ *  Description:  FunÔøΩÔøΩo que recebe a fonte e um texto por parÔøΩmetro para ser exibido na
  *		    tela usando fonte de linhas
  * =====================================================================================
  */
@@ -90,11 +101,11 @@ void Escreve(float x, float y, char value)
 {
 	glPushMatrix();
 	
-	//glLoadIdentity(); // reinicializa as transformaÁıes  
+	//glLoadIdentity(); // reinicializa as transformaÔøΩÔøΩes  
 	glTranslatef(3.2+x,2.1+y,0);	/* posiciona com base na matrix */
 	glScalef(0.008, 0.008, 0.008);  /* diminui o tamanho do fonte	*/
 	glLineWidth(2); 		/* define a espessura da linha 	*/
-	//temp = x+48; 			/* CONVERS√O ASCII 		*/
+	//temp = x+48; 			/* CONVERSÔøΩO ASCII 		*/
 	glutStrokeCharacter(GLUT_STROKE_ROMAN,value);
 	
 	glPopMatrix();
@@ -117,7 +128,7 @@ void DesenhaNumeros()
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  DesenhaPoligono
- *  Description:  FunÁ„o que faz o desenho do tabuleiro
+ *  Description:  FunÔøΩÔøΩo que faz o desenho do tabuleiro
  * =====================================================================================
  */
 void DesenhaTabela()
@@ -158,7 +169,7 @@ void DesenhaTabela()
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  DesenhaPoligono
- *  Description:  FunÁ„o que faz o desenho do POLIGONO
+ *  Description:  FunÔøΩÔøΩo que faz o desenho do POLIGONO
  * =====================================================================================
  */
 void DesenhaPoligono()
@@ -173,7 +184,6 @@ void DesenhaPoligono()
 
 	// Desenha o poligono  
 	glBegin(GL_POLYGON);      
-		
 		glColor3f ( COR_V1);
 		glVertex2f( X1,Y1 );
 	  	
@@ -192,12 +202,12 @@ void DesenhaPoligono()
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  Desenha
- *  Description:  FunÁ„o de callback de redesenho da janela de visualizaÁ„o
+ *  Description:  FunÔøΩÔøΩo de callback de redesenho da janela de visualizaÔøΩÔøΩo
  * =====================================================================================
  */
 void Desenha(void)
 {
-	// Limpa a janela de visualizaÁ„o com a cor  
+	// Limpa a janela de visualizaÔøΩÔøΩo com a cor  
 	// de fundo definida previamente
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -219,7 +229,7 @@ void Desenha(void)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  AlteraTamanhoJanela
- *  Description:  FunÁ„o callback chamada quando o tamanho da janela È alterado
+ *  Description:  FunÔøΩÔøΩo callback chamada quando o tamanho da janela ÔøΩ alterado
  * =====================================================================================
  */
 void AlteraTamanhoJanela(GLsizei w, GLsizei h)
@@ -227,7 +237,7 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 	// Evita a divisao por zero
 	if(h == 0) h = 1;
 	
-	// Atualiza as vari·veis
+	// Atualiza as variÔøΩveis
 	largura = w;
 	altura = h;
 
@@ -236,8 +246,8 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	
-	// Estabelece a janela de seleÁ„o (esquerda, direita, inferior, 
-	// superior) mantendo a proporÁ„o com a janela de visualizaÁ„o
+	// Estabelece a janela de seleÔøΩÔøΩo (esquerda, direita, inferior, 
+	// superior) mantendo a proporÔøΩÔøΩo com a janela de visualizaÔøΩÔøΩo
 	//gluOrtho2D (-win*aspecto, win*aspecto, -win, win);
 	
 //	gluOrtho2D(-7.5f,8.5f,-5.5,6.5f);
@@ -247,7 +257,7 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  TecladoEspecial
- *  Description:  FunÁ„o callback chamada para gerenciar eventos de teclas especiais
+ *  Description:  FunÔøΩÔøΩo callback chamada para gerenciar eventos de teclas especiais
  * =====================================================================================
  */
 void TecladoEspecial (int key, int x, int y) 
@@ -273,7 +283,7 @@ void TecladoEspecial (int key, int x, int y)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  Teclado
- *  Description:  FunÁ„o callback chamada para gerenciar eventos de teclas
+ *  Description:  FunÔøΩÔøΩo callback chamada para gerenciar eventos de teclas
  * =====================================================================================
  */
 void Teclado (unsigned char key, int x, int y)
@@ -302,7 +312,7 @@ void Teclado (unsigned char key, int x, int y)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  GerenciaMouse
- *  Description:  FunÁ„o callback chamada para gerenciar eventos do mouse
+ *  Description:  FunÔøΩÔøΩo callback chamada para gerenciar eventos do mouse
  * =====================================================================================
  */
 void GerenciaMouse(int button, int state, int x, int y)
@@ -313,11 +323,11 @@ void GerenciaMouse(int button, int state, int x, int y)
 
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
-		linha 	= (int)((x/largura_tela)-3);
-		coluna  = (int)((y/altura_tela)-1);
+		linha 	= (int)((x/du_largura)-3);
+		coluna  = (int)((y/du_altura)-1);
 		
 		//printf("coluna[%d]linha[%d]\n",(int) ((x-405)/70) ,(int) ((y-36)/69) ); 
-		printf("coluna[%d]linha[%d]\n", (int)((x/largura_tela)-3),(int)((y/altura_tela)-1)); 
+		printf("coluna[%d]linha[%d]\n", (int)((x/du_largura)-3),(int)((y/du_altura)-1)); 
 
 	}   
 
@@ -336,18 +346,147 @@ void GerenciaMouse(int button, int state, int x, int y)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  Inicializa
- *  Description:  FunÁ„o respons·vel por inicializar par‚mentros e vari·veis
+ *  Description:  FunÔøΩÔøΩo responsÔøΩvel por inicializar parÔøΩmentros e variÔøΩveis
  * =====================================================================================
  */
 void Inicializa (void)
 {   
-	// Define a cor de fundo da janela de visualizaÁ„o como branca
+	// Define a cor de fundo da janela de visualizaÔøΩÔøΩo como branca
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	win = 5.5f;
 	
 	//gluOrtho2D(-5.0f,5.0f,-5.0f,5.0f);
 }
  
+/****
+ *		ROTINAS RELACIONADAS AO MENU INICIAL
+ ****/
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  desenhaMenu 
+ *  Description:  renderiza o menu principal 
+ * =====================================================================================
+ */
+void escreveMenuTexto(int choos, double x, double y)
+{
+	char menu[4][10] = {
+				"JOGAR",
+				"OPCOES",
+				"CREDITOS",
+				"SAIR"
+			 };
+
+	glPushMatrix();
+
+	// n√£o consegui centralizar esse texto ainda..
+	glTranslatef(x + largura_bloco / 2.0, y - altura_bloco, 0.0f);
+	glScalef(0.005, 0.005, 0.0);
+	glLineWidth(2);
+
+	for (int i = 0; menu[choos][i] != '\0'; ++i)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, menu[choos][i]);
+
+	glPopMatrix();
+}
+
+void desenhaMenu()
+{
+	// Limpa a janela de visualizaÔøΩÔøΩo com a cor  
+	// de fundo definida previamente
+	glClear(GL_COLOR_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+
+	// Define a Viewport 1
+	glViewport(0, 0, largura, altura);
+
+	glPushMatrix();
+	// desenha caixas de di√°logo
+	for (int i = 0; i < 4; i++) {
+		glBegin(GL_QUADS);
+			if (i != box_select)
+				glColor3f(PRETO);
+			else 
+				glColor3f(VERMELHO);
+
+			glVertex2f(st_x, st_y);
+			glVertex2f(st_x, st_y  - altura_bloco);
+			glVertex2f(st_x + largura_bloco, st_y - altura_bloco);
+			glVertex2f(st_x + largura_bloco, st_y); 
+		glEnd();
+
+		glColor3f(AZUL);
+		escreveMenuTexto(i, st_x, st_y);
+
+		glTranslatef(0.0f, - (altura_bloco + space), 0.0f);
+	}
+
+	glPopMatrix();
+	glFlush();
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  menuTecladoSpecHandle 
+ *  Description:  intera√ß√£o com o menu 
+ * =====================================================================================
+ */
+void menuTecladoSpecHandle(int key, int x, int y)
+{
+	if (key == GLUT_KEY_UP && box_select > 0) 
+		box_select--;
+	else  if (key == GLUT_KEY_DOWN && box_select < 3)
+		box_select++;
+	
+	glutPostRedisplay();
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  menuTecladoHandle 
+ *  Description:  seleciona um item do menu 
+ * =====================================================================================
+ */
+void menuTecladoHandle(unsigned char key, int x, int y)
+{
+	if (key == 13) {
+		switch (box_select) {
+		case 0:
+			glutDisplayFunc(Desenha);
+			glutKeyboardFunc(Teclado);
+			glutSpecialFunc(TecladoEspecial);
+			break;
+		case 1:
+			// go to op√ß√µes [n√£o implementado]
+			break;
+		case 2:
+			// mostra os cr√©ditos [n√£o implementado]
+			break;
+		case 3:
+			// mensagem de texto bonitinha e sair [n√£o implementado]
+			exit(EXIT_SUCCESS);
+			break;
+		}
+	}
+
+	glutPostRedisplay();
+}
+
+/****
+ *		SUDOKU L√ìGICA E L√ìGICA PESADA	
+ ****/
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  setaValores 
+ *  Description:  seleciona um item do menu 
+ * =====================================================================================
+ */
+void setaValores(int dificuldade)
+{
+
+}
+
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  main
@@ -356,9 +495,6 @@ void Inicializa (void)
  */
 int main(int argc, char** argv)
 {
-	
-	
-	
 	// Init 
 	glutInit(&argc, argv);
 	
@@ -367,47 +503,46 @@ int main(int argc, char** argv)
 	
 	printf ("Pixel Dimensions: %f x %f \n",/*glutGet (GLUT_SCREEN_WIDTH_MM) / */glutGet (GLUT_SCREEN_WIDTH)/16.0,
             /*glutGet (GLUT_SCREEN_HEIGHT_MM) /*/ glutGet(GLUT_SCREEN_HEIGHT)/12.0);
-    printf("%d %d", altura,largura);
-    
-    largura_tela = glutGet (GLUT_SCREEN_WIDTH)/win_lagura;
-    altura_tela = glutGet(GLUT_SCREEN_HEIGHT)/win_altura;
-	
-	
+	printf("%d %d", altura,largura);
+	    
+   	du_largura = glutGet (GLUT_SCREEN_WIDTH)/win_lagura;
+    	du_altura = glutGet(GLUT_SCREEN_HEIGHT)/win_altura;
        	
-	// Define do modo de operaÁ„o da GLUT
+	// Define do modo de operaÔøΩÔøΩo da GLUT
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB); 
  
-	// Especifica a posiÁ„o inicial da janela GLUT
+	// Especifica a posiÔøΩÔøΩo inicial da janela GLUT
 	glutInitWindowPosition(5,5); 
     
 	// Especifica o tamanho inicial em pixels da janela GLUT
 	glutInitWindowSize(MAX_X,MAX_Y); 
  
-	// Cria a janela passando como argumento o tÌtulo da mesma
+	// Cria a janela passando como argumento o tÔøΩtulo da mesma
 	glutCreateWindow("Sudoku");
  
-	// Registra a funÁ„o callback de redesenho da janela de visualizaÁ„o
-	glutDisplayFunc(Desenha);
-  
-	// Registra a funÁ„o callback de redimensionamento da janela de visualizaÁ„o
+	// Registra a funÔøΩÔøΩo callback de redesenho da janela de visualizaÔøΩÔøΩo
+	// glutDisplayFunc(Desenha);
+ 	glutDisplayFunc(desenhaMenu); 
+	// Registra a funÔøΩÔøΩo callback de redimensionamento da janela de visualizaÔøΩÔøΩo
 	glutReshapeFunc(AlteraTamanhoJanela);
 
-	// Registra a funÁ„o callback para tratamento das teclas ASCII
-	glutKeyboardFunc (Teclado);
+	// Registra a funÔøΩÔøΩo callback para tratamento das teclas ASCII
+	// glutKeyboardFunc (Teclado);
+	glutKeyboardFunc(menuTecladoHandle);
   
-	// Registra a funÁ„o de callback para tratamento de teclas especiais
-	glutSpecialFunc (TecladoEspecial);
-
-	// Registra a funÁ„o callback para tratamento do mouse
+	// Registra a funÔøΩÔøΩo de callback para tratamento de teclas especiais
+	//glutSpecialFunc (TecladoEspecial);
+	glutSpecialFunc(menuTecladoSpecHandle);
+	// Registra a funÔøΩÔøΩo callback para tratamento do mouse
 	glutMouseFunc(GerenciaMouse);  
 	
 	// ATIVA A JANELA EM FULLSCREEN
 	glutFullScreen();
 	
-	// Chama a funÁ„o respons·vel por fazer as inicializaÁıes 
+	// Chama a funÔøΩÔøΩo responsÔøΩvel por fazer as inicializaÔøΩÔøΩes 
 	Inicializa();
  
-	// Inicia o processamento e aguarda interaÁıes do usu·rio
+	// Inicia o processamento e aguarda interaÔøΩÔøΩes do usuÔøΩrio
 	glutMainLoop();
  
 	return 0;
