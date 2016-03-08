@@ -63,6 +63,8 @@
 
 int linha=0, coluna=0;
 char sudoku[9][9], sudoku_preenchido[9][9];
+Sudoku Csudoku, Csudoku_preenchido;
+
 float win, aspecto;
 int largura, altura;
 
@@ -133,8 +135,10 @@ void DesenhaNumeros()
 	
 	for(x=0;x<9;x++)
 		for(y=0;y<9;y++)
-			if(sudoku[x][8-y] != -1)
-				Escreve(x,y,sudoku[x][8-y]);
+			if(sudoku[x][8-y] != -1) {
+//				Escreve(x,y,sudoku[x][8-y]);
+				Escreve(x, y, Csudoku.get(x, 8 - y) < 0 ? ' ' : Csudoku.get(x, 8 - y) + '0');
+			}
 }
 
 /* 
@@ -300,18 +304,25 @@ void TecladoEspecial (int key, int x, int y)
  */
 void tecladoSudoku(unsigned char key, int x, int y)
 {
+	SudokuOpr op;
 	// 0       1      2
 	// RED - GREEN - BLUE
 	if(key >='1' && key<= '9')
 	{
-		if (sudoku_preenchido[linha][coluna] == -1)
-			sudoku[linha][coluna] = key;
+		if (Csudoku_preenchido.get(linha, coluna) == -1) {
+			Csudoku.mark(key - '0', linha, coluna);
+		}
 	}
 	switch(key)
 	{	
 		case 127:
-			if (sudoku_preenchido[linha][coluna] == -1)
-				sudoku[linha][coluna] = -1;
+			if (Csudoku_preenchido.get(linha, coluna) == -1) {
+				Csudoku.unmark(linha, coluna);
+			}
+		break;
+		case 'p':
+		case 'P':
+			op.solve(Csudoku, 0);
 		break;
 		case 27:
 		case 'q':
@@ -588,16 +599,17 @@ void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
 void setaValores(int dificuldade)
 {
 	SudokuOpr op;
-	Sudoku    tmp;
+//	Sudoku tmp;
+//	op.randomGen(tmp);
+	op.randomGen(Csudoku);
+	Csudoku_preenchido = Csudoku;
 
-	op.randomGen(tmp);
-
-	for (int r = 0; r < 9; ++r)
-		for (int c = 0; c < 9; ++c)
-			if (tmp.get(r, c) > 0)
-				sudoku[r][c] = sudoku_preenchido[r][c] = tmp.get(r, c) + '0';
-			else
-				sudoku[r][c] = sudoku_preenchido[r][c] = -1;
+//	for (int r = 0; r < 9; ++r)
+//		for (int c = 0; c < 9; ++c)
+//			if (tmp.get(r, c) > 0) {
+//				sudoku[r][c] = sudoku_preenchido[r][c] = tmp.get(r, c) + '0';
+//			} else
+//				sudoku[r][c] = sudoku_preenchido[r][c] = -1;
 }
 
 /* 
