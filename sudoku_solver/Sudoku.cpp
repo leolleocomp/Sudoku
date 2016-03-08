@@ -13,7 +13,9 @@
 
 Sudoku::Sudoku()
 {
-	memset(sudoku, 0, sizeof sudoku);
+	for (int r = 0; r < 9; ++r)
+		for (int c = 0; c < 9; ++c)
+			sudoku[r][c] = -1;
 
 	for (int k = 0; k < 9; ++k) {
 		lin[k] = 1;
@@ -87,7 +89,7 @@ void Sudoku::unmark(int r, int c)
 	col[c] &= ~(1 << sudoku[r][c]);
 	lin[r] &= ~(1 << sudoku[r][c]);
 	block[r/3][c/3] &= ~(1 << sudoku[r][c]);
-	sudoku[r][c] = 0;
+	sudoku[r][c] = -1;
 }
 
 /**
@@ -153,7 +155,7 @@ void Sudoku::print()
 		
 		for (int j = 0; j < 9; ++j) {
 			if (j && j%3 == 0) printf("| ");
-			if (sudoku[i][j])  printf("%d ", sudoku[i][j]);
+			if (sudoku[i][j] > 0)  printf("%d ", sudoku[i][j]);
 			else printf("# ");
 		}
 		printf("\n");

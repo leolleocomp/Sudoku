@@ -38,7 +38,7 @@ bool SudokuOpr::solve(Sudoku &table, int elem)
 
 	int r = elem / 9, c = elem % 9;
 
-	if (table.get(r,c))
+	if (table.get(r,c) > 0)
 		return solve(table, elem + 1);	
 	else
 		for (int k = 1; k <= 9; ++k)
@@ -72,12 +72,12 @@ void SudokuOpr::randomGen(Sudoku &table)
 	while (givens) {
 		int pos = rand() % 81;
 
-		while (table.get(pos / 9, pos % 9)) {
+		while (table.get(pos / 9, pos % 9) > 0) {
 			pos = rand() % 81;
 		}
 
 		int i = 1;
-		while (i <= 9 && !table.canBePut(i, pos / 9, pos % 9)) i++;
+		while (i <= 9 && (table.canBePut(i, pos / 9, pos % 9) < 0)) i++;
 		if (i > 9) continue;
 
 		tmp = table;
@@ -114,7 +114,7 @@ void SudokuOpr::setGaps(Sudoku &table)
 	while (n) {
 		int pos = rand() % 81, aux;
 
-		while (!table.get(pos / 9, pos % 9))
+		while (table.get(pos / 9, pos % 9) < 0)
 			pos = rand() % 81;
 
 		tmp = table;
@@ -150,7 +150,7 @@ int SudokuOpr::countSolutions(Sudoku &table, int elem)
 
 	int r = elem / 9, c = elem % 9;
 
-	if (table.get(r, c))
+	if (table.get(r, c) > 0)
 		return solve(table, elem + 1);	
 	else
 		for (int k = 1; k <= 9; ++k)

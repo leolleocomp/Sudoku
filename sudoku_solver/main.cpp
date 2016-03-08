@@ -14,7 +14,7 @@ int main()
 
 	for (int r = 0; r < 9; ++r)
 		for (int c = 0; c < 9; ++c)
-			cont += !table.get(r,c);
+			cont += table.get(r,c) < 0;
 
 	printf("%d\n", cont);
 }
