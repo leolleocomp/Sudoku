@@ -130,12 +130,16 @@ void DesenhaNumeros()
 {
 	int x,y;
 	char temp=1;
-	glColor3f(PRETO);
-	
+
 	
 	for(x=0;x<9;x++)
 		for(y=0;y<9;y++)
 			if(sudoku[x][8-y] != -1) {
+				if (Csudoku_preenchido.get(x, 8 - y) > 0)
+					glColor3f(PRETO);
+				else
+					glColor3f(AZUL);
+
 //				Escreve(x,y,sudoku[x][8-y]);
 				Escreve(x, y, Csudoku.get(x, 8 - y) < 0 ? ' ' : Csudoku.get(x, 8 - y) + '0');
 			}
@@ -272,45 +276,23 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  TecladoEspecial
- *  Description:  Fun��o callback chamada para gerenciar eventos de teclas especiais
- * =====================================================================================
- */
-void TecladoEspecial (int key, int x, int y) 
-{
-	switch(key)
-	{
-		case GLUT_KEY_PAGE_UP:
-			p_scale = 1.5;
-		break;
-		case GLUT_KEY_PAGE_DOWN:
-			p_scale = 0.5;
-		break;
-		case GLUT_KEY_LEFT:
-			tr_x = -1;
-		break;
-		case GLUT_KEY_RIGHT:
-			tr_x = 1;
-		break;
-	}
-	glutPostRedisplay();	
-}	
-
-/* 
- * ===  FUNCTION  ======================================================================
  *         Name:  Teclado
  *  Description:  Fun��o callback chamada para gerenciar eventos de teclas
  * =====================================================================================
  */
+
 void tecladoSudoku(unsigned char key, int x, int y)
 {
 	SudokuOpr op;
+
 	// 0       1      2
 	// RED - GREEN - BLUE
 	if(key >='1' && key<= '9')
 	{
 		if (Csudoku_preenchido.get(linha, coluna) == -1) {
-			Csudoku.mark(key - '0', linha, coluna);
+			if (!Csudoku.mark(key - '0', linha, coluna)) {
+			//	DesenhaPoligono();
+			}
 		}
 	}
 	switch(key)
@@ -322,7 +304,8 @@ void tecladoSudoku(unsigned char key, int x, int y)
 		break;
 		case 'p':
 		case 'P':
-			op.solve(Csudoku, 0);
+			op.solve(Csudoku_preenchido, 0);
+			Csudoku = Csudoku_preenchido;
 		break;
 		case 27:
 		case 'q':
@@ -398,8 +381,9 @@ void escreveMenuTexto(int choos, double x, double y)
 
 	glPushMatrix();
 
-	// não consegui centralizar esse texto ainda..
-	glTranslatef(x + largura_bloco / 2.0, y - altura_bloco, 0.0f);
+	double delta[] = { 1.5, 1.5, 1.5 };
+
+	glTranslatef(x + largura_bloco / 2.0 - delta[choos], y - altura_bloco, 0.0f);
 	glScalef(0.005, 0.005, 0.0);
 	glLineWidth(2);
 
@@ -509,7 +493,10 @@ void escreveMenuDificuldadeTexto(int choos, double x, double y)
 	glPushMatrix();
 
 	// não consegui centralizar esse texto ainda..
-	glTranslatef(x + largura_bloco / 2.0, y - altura_bloco, 0.0f);
+	double delta[] = { 1., 1., 1. };
+
+	glTranslatef(x + largura_bloco / 2.0 - delta[choos], y - altura_bloco, 0.0f);
+
 	glScalef(0.005, 0.005, 0.0);
 	glLineWidth(2);
 
@@ -579,7 +566,6 @@ void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
 
 		glutDisplayFunc(Desenha);
 		glutKeyboardFunc(tecladoSudoku);
-		glutSpecialFunc(TecladoEspecial);
 	}
 
 	glutPostRedisplay();
