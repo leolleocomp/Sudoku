@@ -1,11 +1,11 @@
 # Define required macros here
 SHELL = /bin/sh
 
-OBJS =  main.c
+OBJS =  main.c sudoku_solver/Sudoku.cpp sudoku_solver/SudokuOpr.cpp
 CFLAG = -Wall
-CC = gcc
+CC = g++
 INCLUDE =
-LIBS = -lm -lgraph -lGL -lGLU -lglut 
+LIBS = -lm -lGL -lGLU -lglut 
 
 main:${OBJS}
 	${CC} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} ${LIBS}

@@ -9,7 +9,7 @@
  *        Version:  1.0
  *        Created:  10-12-2015 16:38:25
  *       Revision:  none
- *       Compiler:  gcc main.c -o main -lGL -lGLU -lglut  && ./main
+ *       Compiler:  g++ main.c -o main -lGL -lGLU -lglut  && ./main
  *       
  *         Author:  GUSTAVO MARQUES (), GUTODISSE AT GMAIL DOT COM
  *   Organization:  
@@ -22,6 +22,8 @@
 #include <GL/gl.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include "sudoku_solver/Sudoku.h"
+#include "sudoku_solver/SudokuOpr.h"
 
 
 /*-----------------------------------------------------------------------------
@@ -60,7 +62,7 @@
 #define PRETO      0,0,0
 
 int linha=0, coluna=0;
-char sudoku[9][9];
+char sudoku[9][9], sudoku_preenchido[9][9];
 float win, aspecto;
 int largura, altura;
 
@@ -89,6 +91,17 @@ int      st_x = 4, 		// posição x inicial do menu
 
 double   altura_bloco = 1.0, 	// altura de cada box do menu 
 	 space = 0.5;		// espaço entre blocos
+
+int 	 menu_limit = 3; 	// limite do menu, usado em menuInicial e menuDificuldade
+
+
+/*-----------------------------------------------------------------------------
+ * VARIÁVEIS e CABEÇALHOS DE FUNÇÕES ASSOCIADOS AO SUDOKU 
+ *-----------------------------------------------------------------------------*/
+void setaValores(int dificuldade);
+void desenhaMenuDificuldade(void);
+void menuDificuldadeTecladoHandle(unsigned char key, int x, int y);
+void escreveMenuDificuldadeTexto(int choos, double x, double y);
 
 /* 
  * ===  FUNCTION  ======================================================================
@@ -122,7 +135,6 @@ void DesenhaNumeros()
 		for(y=0;y<9;y++)
 			if(sudoku[x][8-y] != -1)
 				Escreve(x,y,sudoku[x][8-y]);
-	
 }
 
 /* 
@@ -286,18 +298,20 @@ void TecladoEspecial (int key, int x, int y)
  *  Description:  Fun��o callback chamada para gerenciar eventos de teclas
  * =====================================================================================
  */
-void Teclado (unsigned char key, int x, int y)
+void tecladoSudoku(unsigned char key, int x, int y)
 {
 	// 0       1      2
 	// RED - GREEN - BLUE
-	if( key>='0' && key<= '9')
+	if(key >='1' && key<= '9')
 	{
-		sudoku[linha][coluna] = key;
+		if (sudoku_preenchido[linha][coluna] == -1)
+			sudoku[linha][coluna] = key;
 	}
 	switch(key)
 	{	
 		case 127:
-			sudoku[linha][coluna] = -1;
+			if (sudoku_preenchido[linha][coluna] == -1)
+				sudoku[linha][coluna] = -1;
 		break;
 		case 27:
 		case 'q':
@@ -305,6 +319,7 @@ void Teclado (unsigned char key, int x, int y)
 			exit(0);
 		break;
 	}
+
 	DesenhaNumeros();
 	glutPostRedisplay();
 }
@@ -362,17 +377,10 @@ void Inicializa (void)
  *		ROTINAS RELACIONADAS AO MENU INICIAL
  ****/
 
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  desenhaMenu 
- *  Description:  renderiza o menu principal 
- * =====================================================================================
- */
 void escreveMenuTexto(int choos, double x, double y)
 {
-	char menu[4][10] = {
+	char menu[3][10] = {
 				"JOGAR",
-				"OPCOES",
 				"CREDITOS",
 				"SAIR"
 			 };
@@ -390,6 +398,13 @@ void escreveMenuTexto(int choos, double x, double y)
 	glPopMatrix();
 }
 
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  desenhaMenu 
+ *  Description:  renderiza o menu principal 
+ * =====================================================================================
+ */
+
 void desenhaMenu()
 {
 	// Limpa a janela de visualiza��o com a cor  
@@ -402,7 +417,7 @@ void desenhaMenu()
 
 	glPushMatrix();
 	// desenha caixas de diálogo
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < menu_limit; i++) {
 		glBegin(GL_QUADS);
 			if (i != box_select)
 				glColor3f(PRETO);
@@ -435,7 +450,7 @@ void menuTecladoSpecHandle(int key, int x, int y)
 {
 	if (key == GLUT_KEY_UP && box_select > 0) 
 		box_select--;
-	else  if (key == GLUT_KEY_DOWN && box_select < 3)
+	else  if (key == GLUT_KEY_DOWN && box_select < menu_limit)
 		box_select++;
 	
 	glutPostRedisplay();
@@ -452,21 +467,108 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 	if (key == 13) {
 		switch (box_select) {
 		case 0:
-			glutDisplayFunc(Desenha);
-			glutKeyboardFunc(Teclado);
-			glutSpecialFunc(TecladoEspecial);
+			menu_limit = 3;
+			glutDisplayFunc(desenhaMenuDificuldade);
+			glutKeyboardFunc(menuDificuldadeTecladoHandle);
 			break;
 		case 1:
-			// go to opções [não implementado]
-			break;
-		case 2:
 			// mostra os créditos [não implementado]
 			break;
-		case 3:
+		case 2:
 			// mensagem de texto bonitinha e sair [não implementado]
 			exit(EXIT_SUCCESS);
 			break;
 		}
+	}
+
+	glutPostRedisplay();
+}
+
+/****
+ *		ROTINAS RELACIONADAS AO MENU DE DIFICULDADE 
+ ****/
+
+void escreveMenuDificuldadeTexto(int choos, double x, double y)
+{
+	char menu[3][10] = {
+				"FACIL",
+				"MEDIO",
+				"DIFICIL" };
+
+	glPushMatrix();
+
+	// não consegui centralizar esse texto ainda..
+	glTranslatef(x + largura_bloco / 2.0, y - altura_bloco, 0.0f);
+	glScalef(0.005, 0.005, 0.0);
+	glLineWidth(2);
+
+	for (int i = 0; menu[choos][i] != '\0'; ++i)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, menu[choos][i]);
+
+	glPopMatrix();
+}
+
+void desenhaMenuDificuldade()
+{
+
+	// Limpa a janela de visualiza��o com a cor  
+	// de fundo definida previamente
+	glClear(GL_COLOR_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+
+	// Define a Viewport 1
+	glViewport(0, 0, largura, altura);
+
+	glPushMatrix();
+	// desenha caixas de diálogo
+	for (int i = 0; i < menu_limit; i++) {
+		glBegin(GL_QUADS);
+			if (i != box_select)
+				glColor3f(PRETO);
+			else 
+				glColor3f(VERMELHO);
+
+			glVertex2f(st_x, st_y);
+			glVertex2f(st_x, st_y  - altura_bloco);
+			glVertex2f(st_x + largura_bloco, st_y - altura_bloco);
+			glVertex2f(st_x + largura_bloco, st_y); 
+		glEnd();
+
+		glColor3f(AZUL);
+		escreveMenuDificuldadeTexto(i, st_x, st_y);
+
+		glTranslatef(0.0f, - (altura_bloco + space), 0.0f);
+	}
+
+	glPopMatrix();
+	glFlush();
+}
+
+
+void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
+{
+	int dificuldade;
+
+	if (key == 13) {
+		switch (box_select) {
+		case 0:
+			dificuldade = FACIL;
+			break;
+		case 1:
+			// mostra os créditos [não implementado]
+			dificuldade = MEDIO;
+			break;
+		case 2:
+			// mensagem de texto bonitinha e sair [não implementado]
+			dificuldade = DIFICIL;
+			break;
+		}
+
+		setaValores(dificuldade);
+
+		glutDisplayFunc(Desenha);
+		glutKeyboardFunc(tecladoSudoku);
+		glutSpecialFunc(TecladoEspecial);
 	}
 
 	glutPostRedisplay();
@@ -482,9 +584,20 @@ void menuTecladoHandle(unsigned char key, int x, int y)
  *  Description:  seleciona um item do menu 
  * =====================================================================================
  */
+
 void setaValores(int dificuldade)
 {
+	SudokuOpr op;
+	Sudoku    tmp;
 
+	op.randomGen(tmp);
+
+	for (int r = 0; r < 9; ++r)
+		for (int c = 0; c < 9; ++c)
+			if (tmp.get(r, c) > 0)
+				sudoku[r][c] = sudoku_preenchido[r][c] = tmp.get(r, c) + '0';
+			else
+				sudoku[r][c] = sudoku_preenchido[r][c] = -1;
 }
 
 /* 
@@ -527,7 +640,7 @@ int main(int argc, char** argv)
 	glutReshapeFunc(AlteraTamanhoJanela);
 
 	// Registra a fun��o callback para tratamento das teclas ASCII
-	// glutKeyboardFunc (Teclado);
+	// glutKeyboardFunc (tecladoSudoku);
 	glutKeyboardFunc(menuTecladoHandle);
   
 	// Registra a fun��o de callback para tratamento de teclas especiais
