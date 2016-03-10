@@ -86,15 +86,15 @@ float p_scale=1;
  * VARIÁVEIS ASSOCIADAS AO MENU INCIAL
  *-----------------------------------------------------------------------------*/
 
-int      st_x = 4, 		// posição x inicial do menu
+int  st_x = 4, 		// posição x inicial do menu
 	 st_y = 8, 		// posição y inicial do menu
 	 largura_bloco = 8,	// largura de cada box do menu
 	 box_select    = 0;	// indica qual box do menu está atualmente selecionada
 
-double   altura_bloco = 1.0, 	// altura de cada box do menu 
-	 space = 0.5;		// espaço entre blocos
+double	altura_bloco = 1.0, 	// altura de cada box do menu 
+	 	space = 0.5;		// espaço entre blocos
 
-int 	 menu_limit = 3; 	// limite do menu, usado em menuInicial e menuDificuldade
+int	menu_limit = 3; 	// limite do menu, usado em menuInicial e menuDificuldade
 
 
 /*-----------------------------------------------------------------------------
@@ -104,6 +104,8 @@ void setaValores(int dificuldade);
 void desenhaMenuDificuldade(void);
 void menuDificuldadeTecladoHandle(unsigned char key, int x, int y);
 void escreveMenuDificuldadeTexto(int choos, double x, double y);
+
+void DesenhaPoligono(GLfloat x1, GLfloat y1);
 
 /* 
  * ===  FUNCTION  ======================================================================
@@ -165,26 +167,37 @@ void DesenhaTabela()
 	
 	// Desenha as linhas
 	//for(i=-4; i<6; i++)
+	
 	for(i=2; i<12; i++)
 	{
+		if((i-2)%3==0)
+			glLineWidth(3.0 );
+			
 		glBegin(GL_LINES);      
 			glColor3f( PRETO );
 			glVertex2f( 3.0 , i );
 		  	glVertex2f(  12.0 , i );       
-		glEnd();    
+		glEnd();
+		glLineWidth(1.0 );    
 	}
     	
     	// Desenha as colunas
     	//for(i=-4; i<6; i++)
-    	for(i=3.5; i<13; i++)
-	{
+
+	for(i=3.5; i<13; i++)
+	{	
+		if((i-3)%3==0)
+			glLineWidth(3.0 );
 		// Desenha o poligono  
 			glBegin(GL_LINES);      
 				glColor3f( PRETO );
 				glVertex2f( i, 2 );
 			  	glVertex2f( i,  11 );       
-			glEnd();    
-    	}
+			glEnd();  
+			glLineWidth(1.0 );  
+    }
+    
+    DesenhaPoligono(linha+3,10-coluna);
 }
 /* 
  * ===  FUNCTION  ======================================================================
@@ -192,31 +205,36 @@ void DesenhaTabela()
  *  Description:  Fun��o que faz o desenho do POLIGONO
  * =====================================================================================
  */
-void DesenhaPoligono()
-{
-	// TRANSLATE                		
-	glTranslatef(tr_x, tr_y, tr_z);
-	tr_x = tr_y = tr_z = 0;
+void DesenhaPoligono(GLfloat x1, GLfloat y1)
+{	
+	//printf("Here");
+	// Muda para o sistema de coordenadas do modelo
+	glMatrixMode(GL_MODELVIEW);
+	// Inicializa a matriz de transformação corrente
+	glLoadIdentity();
+	
+	glPushMatrix();
 
-	// ESCALA
-	glScalef(p_scale, p_scale, p_scale);
-	p_scale = 1;
+	glTranslatef(x1,y1,0.0f);
 
-	// Desenha o poligono  
-	glBegin(GL_POLYGON);      
-		glColor3f ( COR_V1);
-		glVertex2f( X1,Y1 );
+	glColor3f ( VERMELHO);
+	glBegin(GL_QUADS);      
+		
+		glVertex2f( 0,0 );
 	  	
-		glColor3f ( COR_V2);	
-		glVertex2f( X2,Y2 );
+	//	glColor3f ( COR_V2);	
+		glVertex2f( 0,1 );
 	 	
-		glColor3f ( COR_V3);	
-		glVertex2f( X3,Y3 );
+		//glColor3f ( COR_V3);	
+		glVertex2f( 1,1 );
 
-		glColor3f ( COR_V4);	
-		glVertex2f( X4,Y4 );             
-	glEnd();    
-    
+		//glColor3f ( COR_V4);	
+		glVertex2f( 1,0 );  
+		       
+	glEnd(); 
+	
+	glPopMatrix();
+	glFlush();
 }
 
 /* 
@@ -295,24 +313,28 @@ void tecladoSudoku(unsigned char key, int x, int y)
 			}
 		}
 	}
+	
 	switch(key)
 	{	
 		case 127:
 			if (Csudoku_preenchido.get(linha, coluna) == -1) {
 				Csudoku.unmark(linha, coluna);
 			}
-		break;
+			break;
 		case 'p':
 		case 'P':
 			op.solve(Csudoku_preenchido, 0);
 			Csudoku = Csudoku_preenchido;
-		break;
+			break;
 		case 27:
 		case 'q':
 		case 'Q':
 			exit(0);
-		break;
+			break;
+		
 	}
+	
+	/**/
 
 	DesenhaNumeros();
 	glutPostRedisplay();
@@ -328,8 +350,8 @@ void GerenciaMouse(int button, int state, int x, int y)
 {       
 	int i;
 	if (button == GLUT_RIGHT_BUTTON ){
+	
 	}
-
 	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
 	{
 		linha 	= (int)((x/du_largura)-3);
@@ -338,7 +360,15 @@ void GerenciaMouse(int button, int state, int x, int y)
 		//printf("coluna[%d]linha[%d]\n",(int) ((x-405)/70) ,(int) ((y-36)/69) ); 
 		printf("coluna[%d]linha[%d]\n", (int)((x/du_largura)-3),(int)((y/du_altura)-1)); 
 
-	}   
+	}  
+	/*if(button == GLUT_KEY_LEFT)
+	{
+		coluna = --coluna % 9;
+	}
+	if(button == GLUT_KEY_RIGHT)
+	{
+		coluna = ++coluna % 9;
+	} */
 
 	/*
 	if (button == GLUT_LEFT_BUTTON || button ==GLUT_RIGHT_BUTTON) 
@@ -350,6 +380,34 @@ void GerenciaMouse(int button, int state, int x, int y)
 	}
 	*/
 	//glutPostRedisplay();
+}
+
+void sudokuTecladoSpecHandle(int key, int x, int y)
+{
+	if(key == GLUT_KEY_LEFT)
+	{	
+		linha--;
+		
+		if(linha < 0)
+			linha = 8;
+	}
+	else if(key == GLUT_KEY_RIGHT)
+	{
+		linha = ++linha % 9;
+	} 
+	else if(key == GLUT_KEY_UP)
+	{	
+		coluna--;
+		
+		if(coluna < 0)
+			coluna = 8;
+	}
+	else if(key == GLUT_KEY_DOWN)
+	{
+		coluna = ++coluna % 9;
+	} 
+
+	glutPostRedisplay();
 }
 
 /* 
@@ -563,7 +621,7 @@ void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
 		}
 
 		setaValores(dificuldade);
-
+		glutSpecialFunc(sudokuTecladoSpecHandle);
 		glutDisplayFunc(Desenha);
 		glutKeyboardFunc(tecladoSudoku);
 	}
