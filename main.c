@@ -22,6 +22,7 @@
 #include <GL/gl.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include <unistd.h>
 #include "sudoku_solver/Sudoku.h"
 #include "sudoku_solver/SudokuOpr.h"
 
@@ -104,8 +105,9 @@ void setaValores(int dificuldade);
 void desenhaMenuDificuldade(void);
 void menuDificuldadeTecladoHandle(unsigned char key, int x, int y);
 void escreveMenuDificuldadeTexto(int choos, double x, double y);
+void DesenhaFudoTabuleiro();
 
-void DesenhaPoligono(GLfloat x1, GLfloat y1);
+void DesenhaCaixaSelecionado(GLfloat x1, GLfloat y1);
 
 /* 
  * ===  FUNCTION  ======================================================================
@@ -132,7 +134,7 @@ void DesenhaNumeros()
 {
 	int x,y;
 	char temp=1;
-
+	//glRotatef(10,4.5f,4.5f,1.0f);
 	
 	for(x=0;x<9;x++)
 		for(y=0;y<9;y++)
@@ -157,6 +159,7 @@ void DesenhaTabela()
 {
 	int i;
 	
+	DesenhaFudoTabuleiro();
 	// TRANSLATE                		
 	glTranslatef(tr_x, tr_y, tr_z);
 	tr_x = tr_y = tr_z = 0;
@@ -165,6 +168,7 @@ void DesenhaTabela()
 	glScalef(p_scale, p_scale, p_scale);
 	p_scale = 1;
 	
+	//glRotatef(10,4.5f,4.5f,1.0f);
 	// Desenha as linhas
 	//for(i=-4; i<6; i++)
 	
@@ -197,7 +201,7 @@ void DesenhaTabela()
 			glLineWidth(1.0 );  
     }
     
-    DesenhaPoligono(linha+3,10-coluna);
+    DesenhaCaixaSelecionado(linha+3,10-coluna);
 }
 /* 
  * ===  FUNCTION  ======================================================================
@@ -205,7 +209,48 @@ void DesenhaTabela()
  *  Description:  Fun��o que faz o desenho do POLIGONO
  * =====================================================================================
  */
-void DesenhaPoligono(GLfloat x1, GLfloat y1)
+void DesenhaCaixaSelecionado(GLfloat x1, GLfloat y1)
+{	
+	//printf("Here");
+	// Muda para o sistema de coordenadas do modelo
+	glMatrixMode(GL_MODELVIEW);
+	// Inicializa a matriz de transformação corrente
+	glLoadIdentity();
+	
+	glPushMatrix();
+	
+		//glRotatef(10,4.5f,4.5f,1.0f);
+	
+	glTranslatef(x1,y1,0.0f);
+	glLineWidth(3.0 );
+	glColor3f ( VERMELHO);
+
+	glBegin(GL_LINES);      
+		glVertex2f( 0,0 );
+		glVertex2f( 0,1 );   
+	glEnd();
+
+	glBegin(GL_LINES);      
+		glVertex2f( 0,1 );	
+		glVertex2f( 1,1 );	       
+	glEnd(); 
+	
+	glBegin(GL_LINES);      
+		glVertex2f( 1,1 );	
+		glVertex2f( 1,0 );         
+	glEnd(); 
+
+	glBegin(GL_LINES);      
+		glVertex2f( 0,0 );
+	  	glVertex2f( 1,0 );  		       
+	glEnd(); 
+	glLineWidth(1.0 );
+	
+	glPopMatrix();
+	glFlush();
+}
+
+void DesenhaCaixaErro(GLfloat x1, GLfloat y1)
 {	
 	//printf("Here");
 	// Muda para o sistema de coordenadas do modelo
@@ -215,28 +260,45 @@ void DesenhaPoligono(GLfloat x1, GLfloat y1)
 	
 	glPushMatrix();
 
-	glTranslatef(x1,y1,0.0f);
+	//glTranslatef(x1,y1,0.0f);
 
 	glColor3f ( VERMELHO);
 	glBegin(GL_QUADS);      
-		
-		glVertex2f( 0,0 );
-	  	
-	//	glColor3f ( COR_V2);	
-		glVertex2f( 0,1 );
-	 	
-		//glColor3f ( COR_V3);	
-		glVertex2f( 1,1 );
-
-		//glColor3f ( COR_V4);	
-		glVertex2f( 1,0 );  
-		       
+		glVertex2f( 0,0 );	
+		glVertex2f( 0,1 );	
+		glVertex2f( 1,1 );	
+		glVertex2f( 1,0 );         
 	glEnd(); 
 	
 	glPopMatrix();
 	glFlush();
 }
 
+void DesenhaFudoTabuleiro()
+{	
+	//printf("Here");
+	// Muda para o sistema de coordenadas do modelo
+	glMatrixMode(GL_MODELVIEW);
+	// Inicializa a matriz de transformação corrente
+	glLoadIdentity();
+	
+	glPushMatrix();
+	
+		//glRotatef(10,4.5f,4.5f,1.0f);
+	
+	glTranslatef(3.0,2.0,0.0f);
+
+	glColor3f ( BRANCO );
+	glBegin(GL_QUADS);      
+		glVertex2f( 0,0 );	
+		glVertex2f( 0,9 );	
+		glVertex2f( 9,9 );	
+		glVertex2f( 9,0 );         
+	glEnd(); 
+	
+	glPopMatrix();
+	glFlush();
+}
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  Desenha
@@ -253,7 +315,7 @@ void Desenha(void)
 	glViewport(0, 0, largura, altura);
 	// Desenha a casa na Viewport 1                        
 	//DesenhaPoligono();
-	
+//		glRotatef(10,4.5f,4.5f,1.0f);
 	// DESENHA AS LINHAS DA TABELA
 	DesenhaTabela();
 	
@@ -271,7 +333,7 @@ void Desenha(void)
  * =====================================================================================
  */
 void AlteraTamanhoJanela(GLsizei w, GLsizei h)
-{	printf("here\n");
+{	
 	// Evita a divisao por zero
 	if(h == 0) h = 1;
 	
@@ -302,21 +364,23 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 void tecladoSudoku(unsigned char key, int x, int y)
 {
 	SudokuOpr op;
-
+	printf("Key = %d \n",key);
 	// 0       1      2
 	// RED - GREEN - BLUE
 	if(key >='1' && key<= '9')
 	{
 		if (Csudoku_preenchido.get(linha, coluna) == -1) {
 			if (!Csudoku.mark(key - '0', linha, coluna)) {
-			//	DesenhaPoligono();
+				DesenhaCaixaErro(linha+3,10-coluna);
+				sleep(1);
 			}
 		}
 	}
 	
 	switch(key)
 	{	
-		case 127:
+		case 8://backspace
+		case 127://delete
 			if (Csudoku_preenchido.get(linha, coluna) == -1) {
 				Csudoku.unmark(linha, coluna);
 			}
@@ -379,7 +443,7 @@ void GerenciaMouse(int button, int state, int x, int y)
 	    glutPostRedisplay();
 	}
 	*/
-	//glutPostRedisplay();
+	glutPostRedisplay();
 }
 
 void sudokuTecladoSpecHandle(int key, int x, int y)
@@ -406,6 +470,8 @@ void sudokuTecladoSpecHandle(int key, int x, int y)
 	{
 		coluna = ++coluna % 9;
 	} 
+	//printf("%d",key);
+   
 
 	glutPostRedisplay();
 }
@@ -419,8 +485,9 @@ void sudokuTecladoSpecHandle(int key, int x, int y)
 void Inicializa (void)
 {   
 	// Define a cor de fundo da janela de visualiza��o como branca
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	win = 5.5f;
+	//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.7f, 0.7f, 0.7f, 0.7f);
+	//win = 5.5f;
 	
 	//gluOrtho2D(-5.0f,5.0f,-5.0f,5.0f);
 }
@@ -503,7 +570,7 @@ void menuTecladoSpecHandle(int key, int x, int y)
 {
 	if (key == GLUT_KEY_UP && box_select > 0) 
 		box_select--;
-	else  if (key == GLUT_KEY_DOWN && box_select < menu_limit)
+	else  if (key == GLUT_KEY_DOWN && box_select < (menu_limit - 1))
 		box_select++;
 	
 	glutPostRedisplay();
@@ -642,7 +709,7 @@ void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
 
 void setaValores(int dificuldade)
 {
-	SudokuOpr op;
+	SudokuOpr op(dificuldade);
 //	Sudoku tmp;
 //	op.randomGen(tmp);
 	op.randomGen(Csudoku);
