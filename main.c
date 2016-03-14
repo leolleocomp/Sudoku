@@ -68,6 +68,7 @@ Sudoku Csudoku, Csudoku_preenchido;
 
 float win, aspecto;
 int largura, altura;
+int game_over = 0;
 
 float du_largura, du_altura;
 float win_lagura =  16.0;
@@ -90,7 +91,8 @@ float p_scale=1;
 int  st_x = 4, 		// posição x inicial do menu
 	 st_y = 8, 		// posição y inicial do menu
 	 largura_bloco = 8,	// largura de cada box do menu
-	 box_select    = 0;	// indica qual box do menu está atualmente selecionada
+	 box_select    = 0,	// indica qual box do menu está atualmente selecionada
+	 box_select_fim	= 0;	// indica qual box do menu de fim de jogo está atualmente selecionada
 
 double	altura_bloco = 1.0, 	// altura de cada box do menu 
 	 	space = 0.5;		// espaço entre blocos
@@ -103,9 +105,14 @@ int	menu_limit = 3; 	// limite do menu, usado em menuInicial e menuDificuldade
  *-----------------------------------------------------------------------------*/
 void setaValores(int dificuldade);
 void desenhaMenuDificuldade(void);
+void desenhaMenu();
 void menuDificuldadeTecladoHandle(unsigned char key, int x, int y);
+void menuTecladoHandle(unsigned char key, int x, int y);
+void menuTecladoSpecHandle(int key, int x, int y);
 void escreveMenuDificuldadeTexto(int choos, double x, double y);
 void DesenhaFudoTabuleiro();
+void desenhaMenuFimDeJogo();
+void escreveMenuTextoFimDeJogo(int choos, double x, double y);
 
 void DesenhaCaixaSelecionado(GLfloat x1, GLfloat y1);
 
@@ -260,7 +267,7 @@ void DesenhaCaixaErro(GLfloat x1, GLfloat y1)
 	
 	glPushMatrix();
 
-	//glTranslatef(x1,y1,0.0f);
+	glTranslatef(x1,y1,0.0f);
 
 	glColor3f ( VERMELHO);
 	glBegin(GL_QUADS);      
@@ -313,15 +320,16 @@ void Desenha(void)
 
 	// Define a Viewport 1
 	glViewport(0, 0, largura, altura);
-	// Desenha a casa na Viewport 1                        
-	//DesenhaPoligono();
-//		glRotatef(10,4.5f,4.5f,1.0f);
+	
 	// DESENHA AS LINHAS DA TABELA
 	DesenhaTabela();
 	
 	// DESENHA OS NUMEROS DA MATRIX SUDOKU
 	DesenhaNumeros();
 	
+	if(game_over==1)
+		desenhaMenuFimDeJogo();
+		
 	// Executa os comandos OpenGL 
 	glFlush();
 }
@@ -363,8 +371,9 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 
 void tecladoSudoku(unsigned char key, int x, int y)
 {
+
 	SudokuOpr op;
-	printf("Key = %d \n",key);
+	int aux = 0;
 	// 0       1      2
 	// RED - GREEN - BLUE
 	if(key >='1' && key<= '9')
@@ -389,6 +398,21 @@ void tecladoSudoku(unsigned char key, int x, int y)
 		case 'P':
 			op.solve(Csudoku_preenchido, 0);
 			Csudoku = Csudoku_preenchido;
+			game_over = 1;
+			break;
+		case 13:
+			if(game_over==1){
+				game_over = 0;
+				if(box_select_fim==0){
+					/*menu_limit = 3;
+					glutDisplayFunc(desenhaMenuDificuldade);
+					glutKeyboardFunc(menuDificuldadeTecladoHandle);
+					glutSpecialFunc(menuTecladoSpecHandle);
+					aux = 1;*/
+				}
+				else
+					exit(EXIT_SUCCESS);
+			}
 			break;
 		case 27:
 		case 'q':
@@ -399,7 +423,7 @@ void tecladoSudoku(unsigned char key, int x, int y)
 	}
 	
 	/**/
-
+	//if(aux==0)
 	DesenhaNumeros();
 	glutPostRedisplay();
 }
@@ -425,29 +449,12 @@ void GerenciaMouse(int button, int state, int x, int y)
 		printf("coluna[%d]linha[%d]\n", (int)((x/du_largura)-3),(int)((y/du_altura)-1)); 
 
 	}  
-	/*if(button == GLUT_KEY_LEFT)
-	{
-		coluna = --coluna % 9;
-	}
-	if(button == GLUT_KEY_RIGHT)
-	{
-		coluna = ++coluna % 9;
-	} */
-
-	/*
-	if (button == GLUT_LEFT_BUTTON || button ==GLUT_RIGHT_BUTTON) 
-	{
-	    glMatrixMode(GL_PROJECTION);
-	    glLoadIdentity(); 
-	    gluOrtho2D (-win*aspecto, win*aspecto, -win, win);
-	    glutPostRedisplay();
-	}
-	*/
+	
 	glutPostRedisplay();
 }
 
 void sudokuTecladoSpecHandle(int key, int x, int y)
-{
+{	
 	if(key == GLUT_KEY_LEFT)
 	{	
 		linha--;
@@ -461,14 +468,24 @@ void sudokuTecladoSpecHandle(int key, int x, int y)
 	} 
 	else if(key == GLUT_KEY_UP)
 	{	
-		coluna--;
-		
-		if(coluna < 0)
-			coluna = 8;
+		if(game_over==0){
+			coluna--;
+			if(coluna < 0)
+				coluna = 8;
+		}
+		else
+		{
+			box_select_fim--;
+			if(box_select_fim < 0)
+				box_select_fim = 1;
+		}
 	}
 	else if(key == GLUT_KEY_DOWN)
 	{
-		coluna = ++coluna % 9;
+		if(game_over==0)
+			coluna = ++coluna % 9;
+		else
+			box_select_fim = ++box_select_fim % 2;
 	} 
 	//printf("%d",key);
    
@@ -560,6 +577,65 @@ void desenhaMenu()
 	glFlush();
 }
 
+void desenhaMenuFimDeJogo()
+{
+	// Limpa a janela de visualiza��o com a cor  
+	// de fundo definida previamente
+	//glClear(GL_COLOR_BUFFER_BIT);
+	//glMatrixMode(GL_MODELVIEW);
+
+	// Define a Viewport 1
+	//glViewport(0, 0, largura, altura);
+	float st_x = 12.5;
+	float st_y = 7.5;
+	float largura_bloco = 3.0;
+	
+	glPushMatrix();
+	// desenha caixas de diálogo
+	for (int i = 0; i < 2; i++) {
+		glBegin(GL_QUADS);
+			if (i != box_select_fim)
+				glColor3f(PRETO);
+			else 
+				glColor3f(VERMELHO);
+
+			glVertex2f(st_x, st_y);
+			glVertex2f(st_x, st_y  - altura_bloco);
+			glVertex2f(st_x + largura_bloco, st_y - altura_bloco);
+			glVertex2f(st_x + largura_bloco, st_y); 
+		glEnd();
+
+		glColor3f(AZUL);
+		escreveMenuTextoFimDeJogo(i, st_x - 2.2, st_y + 0.3);
+
+		glTranslatef(0.0f, - (altura_bloco + space), 0.0f);
+	}
+
+	glPopMatrix();
+	glFlush();
+}
+
+void escreveMenuTextoFimDeJogo(int choos, double x, double y)
+{
+	char menu[2][10] = {
+				"NOVO JOGO",
+				"SAIR"
+			 };
+
+	glPushMatrix();
+
+	double delta[] = { 1.5, 1.5, 1.5 };
+
+	glTranslatef(x + largura_bloco / 2.0 - delta[choos], y - altura_bloco, 0.0f);
+	glScalef(0.003, 0.003, 0.0);
+	glLineWidth(2);
+
+	for (int i = 0; menu[choos][i] != '\0'; ++i)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, menu[choos][i]);
+
+	glPopMatrix();
+}
+
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  menuTecladoSpecHandle 
@@ -590,6 +666,8 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 			menu_limit = 3;
 			glutDisplayFunc(desenhaMenuDificuldade);
 			glutKeyboardFunc(menuDificuldadeTecladoHandle);
+			glutSpecialFunc(menuTecladoSpecHandle);
+			printf("Dificuldade\n");
 			break;
 		case 1:
 			// mostra os créditos [não implementado]
