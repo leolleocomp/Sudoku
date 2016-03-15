@@ -1,18 +1,18 @@
 /*
  * =====================================================================================
  *
- *       Filename:  vertices.c
+ *       Filename:  main.c
  *
  *    Description:  
  *
  *        Version:  1.0
- *        Created:  10-12-2015 16:38:25
  *       Revision:  none
- *       Compiler:  g++ main.c -o main -lGL -lGLU -lglut  && ./main
+ *       Compiler:  make  && ./main
  *       
  *         Author:  GUSTAVO MARQUES (), GUTODISSE AT GMAIL DOT COM
+ *		    JARDEL RIBEIRO  (), JARDELRIBEIRO.LIMA AT GMAIL DOT COM
+ *                  LEONARDO PRADO  (),  LEOLLEO.COMP AT GMAIL DOT COM		
  *   Organization:  
- *
  * =====================================================================================
  */
 #include <stdlib.h>
@@ -27,14 +27,6 @@
 
 
 /*-----------------------------------------------------------------------------
- *  MACROS
- *-----------------------------------------------------------------------------*/
-#define COR_V1 c1[0],c1[1],c1[2]
-#define COR_V2 c2[0],c2[1],c2[2]
-#define COR_V3 c3[0],c3[1],c3[2]
-#define COR_V4 c4[0],c4[1],c4[2]
-
-/*-----------------------------------------------------------------------------
  *  CONSTANTES
  *-----------------------------------------------------------------------------*/
 
@@ -42,16 +34,6 @@
 #define MAX_X 600
 #define MAX_Y 600
 
-  
-// 
-#define X1 0
-#define X2 6
-#define X3 7
-#define X4 5
-#define Y1 8
-#define Y2 8
-#define Y3 9
-#define Y4 5
 
 // CORES
 #define VERMELHO   1,0,0
@@ -61,6 +43,9 @@
 #define AMARELO    1,1,0
 #define PRETO      0,0,0
 
+/*-----------------------------------------------------------------------------
+ *  VARIAVEIS
+ *-----------------------------------------------------------------------------*/
 int linha=0, coluna=0;
 char sudoku[9][9], sudoku_preenchido[9][9];
 Sudoku Csudoku, Csudoku_preenchido;
@@ -73,13 +58,7 @@ float du_largura, du_altura;
 float win_lagura =  16.0;
 float win_altura = 12.0;
 
-
 int tr_x=0, tr_y=0, tr_z=0; // TRANSLATE
-
-float c1[3]={PRETO}, 
-      c2[3]={AMARELO},
-      c3[3]={BRANCO},
-      c4[3]={VERMELHO};
 
 float p_scale=1;
 
