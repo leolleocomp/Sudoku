@@ -10,7 +10,7 @@
  *       Revision:  none
  *       Compiler:  g++ main.c -o main -lGL -lGLU -lglut  && ./main
  *       
- *         Author:  GUSTAVO MARQUES (), GUTODISSE AT GMAIL DOT COM
+ *         Author:  GUSTAVO MARQUES, JARDEL RIBEIRO DE LIMA, LEONARDO CAVALCANTE DO PRADO
  *   Organization:  
  *
  * =====================================================================================
@@ -68,6 +68,7 @@ Sudoku Csudoku, Csudoku_preenchido;
 float win, aspecto;
 int largura, altura;
 int game_over = 0;
+float angulo_rotacao = 0 ;
 
 float du_largura, du_altura;
 float win_lagura =  16.0;
@@ -125,7 +126,8 @@ void DesenhaCaixaSelecionado(GLfloat x1, GLfloat y1);
 void Escreve(float x, float y, char value)
 {
 	glPushMatrix();
-	
+	glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
+	//glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
 	//glLoadIdentity(); // reinicializa as transforma��es  
 	glTranslatef(3.2+x,2.1+y,0);	/* posiciona com base na matrix */
 	glScalef(0.008, 0.008, 0.008);  /* diminui o tamanho do fonte	*/
@@ -174,7 +176,7 @@ void DesenhaTabela()
 	glScalef(p_scale, p_scale, p_scale);
 	p_scale = 1;
 	
-	//glRotatef(10,4.5f,4.5f,1.0f);
+	glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
 	// Desenha as linhas
 	//for(i=-4; i<6; i++)
 	
@@ -225,7 +227,7 @@ void DesenhaCaixaSelecionado(GLfloat x1, GLfloat y1)
 	
 	glPushMatrix();
 	
-		//glRotatef(10,4.5f,4.5f,1.0f);
+	glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
 	
 	glTranslatef(x1,y1,0.0f);
 	glLineWidth(3.0 );
@@ -290,17 +292,28 @@ void DesenhaFudoTabuleiro()
 	
 	glPushMatrix();
 	
-		//glRotatef(10,4.5f,4.5f,1.0f);
+	glTranslatef(3.0f,2.0f,0.0f);
 	
-	glTranslatef(3.0,2.0,0.0f);
-
+	glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
+	
+	
+	//glTranslatef(10.5f,0.0f,0.0f);
+	//glTranslatef(5.0,4.0,0.0f);
+	
+	
 	glColor3f ( BRANCO );
 	glBegin(GL_QUADS);      
 		glVertex2f( 0,0 );	
 		glVertex2f( 0,9 );	
 		glVertex2f( 9,9 );	
-		glVertex2f( 9,0 );         
+		glVertex2f( 9,0 );
+		/*glVertex2f( 4.5,-4.5 );	
+		glVertex2f( 4.5,4.5 );	
+		glVertex2f( -4.5,4.5 );	
+		glVertex2f( -4.5,-4.5 );  */       
 	glEnd(); 
+	
+	
 	
 	glPopMatrix();
 	glFlush();
@@ -367,6 +380,18 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
  *  Description:  Fun��o callback chamada para gerenciar eventos de teclas
  * =====================================================================================
  */
+ 
+void makedelay(int){
+
+	Desenha();
+	angulo_rotacao++;
+	if(angulo_rotacao<=360)
+		glutTimerFunc(0.5,makedelay,1);
+	else{
+		angulo_rotacao = 0;
+		return;
+		}
+}
 
 void tecladoSudoku(unsigned char key, int x, int y)
 {
@@ -397,6 +422,8 @@ void tecladoSudoku(unsigned char key, int x, int y)
 		case 'P':
 			op.solve(Csudoku_preenchido, 0);
 			Csudoku = Csudoku_preenchido;
+			glutTimerFunc(1,makedelay,1);
+			angulo_rotacao = 0;
 			game_over = 1;
 			break;
 		case 13:
@@ -404,6 +431,7 @@ void tecladoSudoku(unsigned char key, int x, int y)
 				game_over = 0;
 				if(box_select_fim==0){
 					menu_limit = 3;
+					
 					glutDisplayFunc(desenhaMenuDificuldade);
 					glutKeyboardFunc(menuDificuldadeTecladoHandle);
 					glutSpecialFunc(menuTecladoSpecHandle);
@@ -422,10 +450,11 @@ void tecladoSudoku(unsigned char key, int x, int y)
 	}
 	
 	/**/
-	if(aux==0)
+	//if(aux==0)
 		DesenhaNumeros();
 
 	glutPostRedisplay();
+
 }
 
 /* 
@@ -457,14 +486,25 @@ void sudokuTecladoSpecHandle(int key, int x, int y)
 {	
 	if(key == GLUT_KEY_LEFT)
 	{	
-		linha--;
+		if(game_over==0){
+			linha--;
 		
-		if(linha < 0)
-			linha = 8;
+			if(linha < 0)
+				linha = 8;
+		}	
+		else
+			box_select_fim = ++box_select_fim % 2;
 	}
 	else if(key == GLUT_KEY_RIGHT)
 	{
-		linha = ++linha % 9;
+		if(game_over==0)
+			linha = ++linha % 9;
+		else
+		{
+			box_select_fim--;
+			if(box_select_fim < 0)
+				box_select_fim = 1;
+		}
 	} 
 	else if(key == GLUT_KEY_UP)
 	{	
