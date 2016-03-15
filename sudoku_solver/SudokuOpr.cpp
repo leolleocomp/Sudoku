@@ -67,6 +67,8 @@ void SudokuOpr::randomGen(Sudoku &table)
 	Sudoku tmp;
 	int givens = 11;
 
+	table.erase();
+
 	srand(time(NULL)); // 'alimenta' o gerador de números pseudo aleatórios
 
 	while (givens) {

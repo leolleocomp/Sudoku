@@ -23,6 +23,7 @@ public:
 	bool canBePut(int elem, int r, int c); 		// verifica se elem pode ser colocado em sudoku[r][c]
 	bool sudokuIsComplete();			// verifica se o sudoku está completo
 	void print();					// imprime o sudoku na saida padrão
+	void erase();					// erase sudoku
 
 	int get(int r, int c);
 

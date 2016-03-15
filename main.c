@@ -1,4 +1,3 @@
-
 /*
  * =====================================================================================
  *
@@ -404,11 +403,11 @@ void tecladoSudoku(unsigned char key, int x, int y)
 			if(game_over==1){
 				game_over = 0;
 				if(box_select_fim==0){
-					/*menu_limit = 3;
+					menu_limit = 3;
 					glutDisplayFunc(desenhaMenuDificuldade);
 					glutKeyboardFunc(menuDificuldadeTecladoHandle);
 					glutSpecialFunc(menuTecladoSpecHandle);
-					aux = 1;*/
+					aux = 1;
 				}
 				else
 					exit(EXIT_SUCCESS);
@@ -423,8 +422,9 @@ void tecladoSudoku(unsigned char key, int x, int y)
 	}
 	
 	/**/
-	//if(aux==0)
-	DesenhaNumeros();
+	if(aux==0)
+		DesenhaNumeros();
+
 	glutPostRedisplay();
 }
 

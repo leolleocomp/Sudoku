@@ -13,18 +13,7 @@
 
 Sudoku::Sudoku()
 {
-	for (int r = 0; r < 9; ++r)
-		for (int c = 0; c < 9; ++c)
-			sudoku[r][c] = -1;
-
-	for (int k = 0; k < 9; ++k) {
-		lin[k] = 1;
-		col[k] = 1;
-	}
-
-	for (int r = 0; r < 3; ++r)
-		for (int c = 0; c < 3; ++c)
-			block[r][c] = 1;
+	erase();
 }
 
 /**
@@ -162,6 +151,22 @@ void Sudoku::print()
 	}
 	
 	printf("\n\n");
+}
+
+void Sudoku::erase()
+{
+	for (int r = 0; r < 9; ++r)
+		for (int c = 0; c < 9; ++c)
+			sudoku[r][c] = -1;
+
+	for (int k = 0; k < 9; ++k) {
+		lin[k] = 1;
+		col[k] = 1;
+	}
+
+	for (int r = 0; r < 3; ++r)
+		for (int c = 0; c < 3; ++c)
+			block[r][c] = 1;
 }
 
 int Sudoku::get(int r, int c)
