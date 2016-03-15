@@ -48,7 +48,7 @@
  *-----------------------------------------------------------------------------*/
 int linha=0, coluna=0;
 char sudoku[9][9], sudoku_preenchido[9][9];
-Sudoku Csudoku, Csudoku_preenchido;
+Sudoku Csudoku, Csudoku_preenchido, Csudoku_resolvido;
 
 float win, aspecto;
 int largura, altura;
@@ -187,8 +187,8 @@ void DesenhaTabela()
 			glEnd();  
 			glLineWidth(1.0 );  
     }
-    
-    DesenhaCaixaSelecionado(linha+3,10-coluna);
+    if(linha >= 0 && linha < 9 && coluna >= 0 && coluna < 9 )
+    	DesenhaCaixaSelecionado(linha+3,10-coluna);
 }
 /* 
  * ===  FUNCTION  ======================================================================
@@ -378,11 +378,31 @@ void tecladoSudoku(unsigned char key, int x, int y)
 	if(key >='1' && key<= '9')
 	{
 		if (Csudoku_preenchido.get(linha, coluna) == -1) {
+			Csudoku.unmark(linha, coluna);
+			
 			if (!Csudoku.mark(key - '0', linha, coluna)) {
 				DesenhaCaixaErro(linha+3,10-coluna);
 				sleep(1);
 			}
+			
+			Csudoku.print();
+			
+			if (Csudoku.isComplete())
+				key = 'p';
 		}
+	}
+	
+	if (key == 'h' || key == 'H') {
+			Csudoku_preenchido.mark(Csudoku_resolvido.get(linha, coluna), linha, coluna);
+			Csudoku_preenchido.print();
+			
+			if (!Csudoku.mark(Csudoku_preenchido.get(linha, coluna), linha, coluna)) {
+				DesenhaCaixaErro(linha+3,10-coluna);
+				sleep(1);
+			}
+			
+			if (Csudoku.isComplete())
+				key = 'p';
 	}
 	
 	switch(key)
@@ -392,7 +412,7 @@ void tecladoSudoku(unsigned char key, int x, int y)
 			if (Csudoku_preenchido.get(linha, coluna) == -1) {
 				Csudoku.unmark(linha, coluna);
 			}
-			break;
+			break;		
 		case 'p':
 		case 'P':
 			op.solve(Csudoku_preenchido, 0);
@@ -806,8 +826,11 @@ void setaValores(int dificuldade)
 //	Sudoku tmp;
 //	op.randomGen(tmp);
 	op.randomGen(Csudoku);
+	
 	Csudoku_preenchido = Csudoku;
-
+    Csudoku_resolvido  = Csudoku;
+  
+    op.solve(Csudoku_resolvido, 0);
 //	for (int r = 0; r < 9; ++r)
 //		for (int c = 0; c < 9; ++c)
 //			if (tmp.get(r, c) > 0) {

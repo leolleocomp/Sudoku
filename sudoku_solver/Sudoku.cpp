@@ -109,7 +109,7 @@ bool Sudoku::canBePut(int elem, int r, int c)
  *
  */
 
-bool Sudoku::sudokuIsComplete()
+bool Sudoku::isComplete()
 {
 	int i;
 

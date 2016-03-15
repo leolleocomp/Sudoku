@@ -21,7 +21,7 @@ public:
 	bool mark(int elem, int r, int c);		// coloca o elemento elem em sudoku[r][c]
 	void unmark(int r, int c);			// retira o elemento eleme de sudoku[r][c]
 	bool canBePut(int elem, int r, int c); 		// verifica se elem pode ser colocado em sudoku[r][c]
-	bool sudokuIsComplete();			// verifica se o sudoku está completo
+	bool isComplete();			// verifica se o sudoku está completo
 	void print();					// imprime o sudoku na saida padrão
 	void erase();					// erase sudoku
 
