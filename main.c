@@ -306,11 +306,7 @@ void DesenhaFudoTabuleiro()
 		glVertex2f( 0,0 );	
 		glVertex2f( 0,9 );	
 		glVertex2f( 9,9 );	
-		glVertex2f( 9,0 );
-		/*glVertex2f( 4.5,-4.5 );	
-		glVertex2f( 4.5,4.5 );	
-		glVertex2f( -4.5,4.5 );	
-		glVertex2f( -4.5,-4.5 );  */       
+		glVertex2f( 9,0 );    
 	glEnd(); 
 	
 	
@@ -386,7 +382,7 @@ void makedelay(int){
 	Desenha();
 	angulo_rotacao++;
 	if(angulo_rotacao<=360)
-		glutTimerFunc(0.5,makedelay,1);
+		glutTimerFunc(0.2,makedelay,1);
 	else{
 		angulo_rotacao = 0;
 		return;
