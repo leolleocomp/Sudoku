@@ -59,13 +59,14 @@ float win, aspecto;
 int largura, altura;
 int game_over = 0;
 int menu;
-float angulo_rotacao = 0 ;
+float angulo_rotacao = 0;
 
 float du_largura, du_altura;
 float win_lagura =  16.0;
 float win_altura = 12.0;
 
-int tr_x=0, tr_y=0, tr_z=0; // TRANSLATE
+int tr_x=0, tr_z=0; // TRANSLATE
+double tr_y;
 
 float p_scale=1;
 
@@ -92,6 +93,7 @@ void desenhaCreditos();
 void menuDificuldadeTecladoHandle(unsigned char key, int x, int y);
 void menuTecladoHandle(unsigned char key, int x, int y);
 void creditosTecladoHandle(unsigned char key, int x, int y);
+void creditosDelay(int value);
 void menuTecladoSpecHandle(int key, int x, int y);
 void escreveMenuDificuldadeTexto(int choos, double x, double y);
 void DesenhaFudoTabuleiro();
@@ -748,8 +750,10 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 			glutSpecialFunc(menuTecladoSpecHandle);
 			break;
 		case 1:
+			tr_y = -10;
 			glutDisplayFunc(desenhaCreditos);
 			glutKeyboardFunc(creditosTecladoHandle);
+			glutTimerFunc(1,creditosDelay,1);
 			// mostra os créditos [não implementado]
 			break;
 		case 2:
@@ -864,6 +868,14 @@ void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
  *		ROTINAS RELACIONADAS AOS CRÉDITOS 
  ****/
 
+void creditosDelay(int value)
+{
+	tr_y += .01;
+	if (tr_y > 0.) return;
+	glutPostRedisplay();
+	glutTimerFunc(12.5, creditosDelay, 1);
+}
+
 void printStrokeString(char *s)
 {
 
@@ -887,6 +899,9 @@ void desenhaCreditos()
 	
 	glClear(GL_COLOR_BUFFER_BIT);
 	glViewport(0, 0, largura, altura);
+
+	glPushMatrix();
+	glTranslatef(0,tr_y,0);
 
 	glPushMatrix();
 
@@ -932,6 +947,7 @@ void desenhaCreditos()
 		glLineWidth(2);
 		glColor3f(AZUL);
 		printStrokeString("ESC - voltar");	
+	glPopMatrix();
 	glPopMatrix();
 	glFlush();
 }
