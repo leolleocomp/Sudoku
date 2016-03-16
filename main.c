@@ -43,6 +43,11 @@
 #define AMARELO    1,1,0
 #define PRETO      0,0,0
 
+#define HINT 1
+#define RESOLVER 2
+#define NOVO_JOGO 3
+#define SAIR 4
+
 /*-----------------------------------------------------------------------------
  *  VARIAVEIS
  *-----------------------------------------------------------------------------*/
@@ -53,6 +58,7 @@ Sudoku Csudoku, Csudoku_preenchido, Csudoku_resolvido;
 float win, aspecto;
 int largura, altura;
 int game_over = 0;
+int menu;
 float angulo_rotacao = 0 ;
 
 float du_largura, du_altura;
@@ -91,7 +97,7 @@ void escreveMenuDificuldadeTexto(int choos, double x, double y);
 void DesenhaFudoTabuleiro();
 void desenhaMenuFimDeJogo();
 void escreveMenuTextoFimDeJogo(int choos, double x, double y);
-
+void createGLUTMenus();
 void DesenhaCaixaSelecionado(GLfloat x1, GLfloat y1);
 
 /* 
@@ -115,6 +121,23 @@ void Escreve(float x, float y, char value)
 	
 	glPopMatrix();
 }
+
+void legenda()
+{
+	  char c[100] = "Atalhos do Teclado: 'q' ou 'Esc'- Sair do Jogo  |  'p' - Resolver Sudoku  |  'h' - Hint.";
+	  
+	  glPushMatrix();
+	  glTranslatef(0.1,0.2,0.0);
+	  glScalef(0.002, 0.002, 0.002); 
+  	  glColor3f( PRETO );
+  		
+	  for (int i=0; c[i]!='\0'; i++)
+	  {
+    		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
+	  }
+	  glPopMatrix();
+}
+
 
 void DesenhaNumeros()
 {
@@ -315,7 +338,8 @@ void Desenha(void)
 	
 	if(game_over==1)
 		desenhaMenuFimDeJogo();
-		
+	
+	legenda();
 	// Executa os comandos OpenGL 
 	glFlush();
 }
@@ -367,13 +391,59 @@ void makedelay(int){
 		}
 }
 
+void novoJogo(){
+	
+	glutDisplayFunc(desenhaMenuDificuldade);
+	glutKeyboardFunc(menuDificuldadeTecladoHandle);
+	glutSpecialFunc(menuTecladoSpecHandle);
+	game_over = 0;
+}
+
+void autoCompletar(){
+	
+	SudokuOpr op;
+
+	op.solve(Csudoku_preenchido, 0);
+	Csudoku = Csudoku_preenchido;
+	glutTimerFunc(1,makedelay,1);
+	angulo_rotacao = 0;
+	game_over = 1;
+	
+}
+
+void isComplete(){
+	SudokuOpr op;
+	op.solve(Csudoku_preenchido, 0);
+	Csudoku = Csudoku_preenchido;
+	glutTimerFunc(1,makedelay,1);
+	angulo_rotacao = 0;
+	game_over = 1;
+	
+	
+}
+
+void hintNumero(){
+	
+	Csudoku_preenchido.mark(Csudoku_resolvido.get(linha, coluna), linha, coluna);
+	Csudoku_preenchido.print();
+			
+	if (!Csudoku.mark(Csudoku_preenchido.get(linha, coluna), linha, coluna)) {
+		DesenhaCaixaErro(linha+3,10-coluna);
+		sleep(1);
+	}
+	
+	if (Csudoku.isComplete())
+		isComplete();
+}
+
+
+
 void tecladoSudoku(unsigned char key, int x, int y)
 {
 
 	SudokuOpr op;
 	int aux = 0;
-	// 0       1      2
-	// RED - GREEN - BLUE
+
 	if(key >='1' && key<= '9')
 	{
 		if (Csudoku_preenchido.get(linha, coluna) == -1) {
@@ -414,14 +484,17 @@ void tecladoSudoku(unsigned char key, int x, int y)
 			break;		
 		case 'p':
 		case 'P':
+			glutDestroyMenu(menu);
 			op.solve(Csudoku_preenchido, 0);
 			Csudoku = Csudoku_preenchido;
 			glutTimerFunc(1,makedelay,1);
 			angulo_rotacao = 0;
 			game_over = 1;
+		
 			break;
-		case 13:
+		case 13://Enter
 			if(game_over==1){
+				glutDestroyMenu(menu);
 				game_over = 0;
 				if(box_select_fim==0){
 					menu_limit = 3;
@@ -429,13 +502,13 @@ void tecladoSudoku(unsigned char key, int x, int y)
 					glutDisplayFunc(desenhaMenuDificuldade);
 					glutKeyboardFunc(menuDificuldadeTecladoHandle);
 					glutSpecialFunc(menuTecladoSpecHandle);
-					aux = 1;
+					
 				}
 				else
 					exit(EXIT_SUCCESS);
 			}
 			break;
-		case 27:
+		case 27://Esc
 		case 'q':
 		case 'Q':
 			exit(0);
@@ -443,10 +516,7 @@ void tecladoSudoku(unsigned char key, int x, int y)
 		
 	}
 	
-	/**/
-	//if(aux==0)
-		DesenhaNumeros();
-
+	DesenhaNumeros();
 	glutPostRedisplay();
 
 }
@@ -468,7 +538,6 @@ void GerenciaMouse(int button, int state, int x, int y)
 		linha 	= (int)((x/du_largura)-3);
 		coluna  = (int)((y/du_altura)-1);
 		
-		//printf("coluna[%d]linha[%d]\n",(int) ((x-405)/70) ,(int) ((y-36)/69) ); 
 		printf("coluna[%d]linha[%d]\n", (int)((x/du_largura)-3),(int)((y/du_altura)-1)); 
 
 	}  
@@ -521,8 +590,6 @@ void sudokuTecladoSpecHandle(int key, int x, int y)
 		else
 			box_select_fim = ++box_select_fim % 2;
 	} 
-	//printf("%d",key);
-   
 
 	glutPostRedisplay();
 }
@@ -535,12 +602,7 @@ void sudokuTecladoSpecHandle(int key, int x, int y)
  */
 void Inicializa (void)
 {   
-	// Define a cor de fundo da janela de visualiza��o como branca
-	//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClearColor(0.7f, 0.7f, 0.7f, 0.7f);
-	//win = 5.5f;
-	
-	//gluOrtho2D(-5.0f,5.0f,-5.0f,5.0f);
 }
  
 /****
@@ -582,6 +644,7 @@ void desenhaMenu()
 	// de fundo definida previamente
 	glClear(GL_COLOR_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
+	
 
 	// Define a Viewport 1
 	glViewport(0, 0, largura, altura);
@@ -701,7 +764,6 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 			glutDisplayFunc(desenhaMenuDificuldade);
 			glutKeyboardFunc(menuDificuldadeTecladoHandle);
 			glutSpecialFunc(menuTecladoSpecHandle);
-			printf("Dificuldade\n");
 			break;
 		case 1:
 			glutDisplayFunc(desenhaCreditos);
@@ -714,6 +776,8 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 			break;
 		}
 	}
+	if (key == 27 || key == 'q' ||key == 'Q')
+		exit(EXIT_SUCCESS);
 
 	glutPostRedisplay();
 }
@@ -747,7 +811,7 @@ void escreveMenuDificuldadeTexto(int choos, double x, double y)
 
 void desenhaMenuDificuldade()
 {
-
+	glutDestroyMenu(menu);
 	// Limpa a janela de visualiza��o com a cor  
 	// de fundo definida previamente
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -800,12 +864,15 @@ void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
 			dificuldade = DIFICIL;
 			break;
 		}
-
+		
+		createGLUTMenus();
 		setaValores(dificuldade);
 		glutSpecialFunc(sudokuTecladoSpecHandle);
 		glutDisplayFunc(Desenha);
 		glutKeyboardFunc(tecladoSudoku);
 	}
+	else if (key == 27 || key == 'q' ||key == 'Q')
+		exit(EXIT_SUCCESS);
 
 	glutPostRedisplay();
 }
@@ -910,21 +977,54 @@ void creditosTecladoHandle(unsigned char key, int x, int y)
 void setaValores(int dificuldade)
 {
 	SudokuOpr op(dificuldade);
-//	Sudoku tmp;
-//	op.randomGen(tmp);
 	op.randomGen(Csudoku);
-	
 	Csudoku_preenchido = Csudoku;
     Csudoku_resolvido  = Csudoku;
-  
     op.solve(Csudoku_resolvido, 0);
-//	for (int r = 0; r < 9; ++r)
-//		for (int c = 0; c < 9; ++c)
-//			if (tmp.get(r, c) > 0) {
-//				sudoku[r][c] = sudoku_preenchido[r][c] = tmp.get(r, c) + '0';
-//			} else
-//				sudoku[r][c] = sudoku_preenchido[r][c] = -1;
+
 }
+
+void processMenuEvents(int option) {
+
+	switch (option) {
+		case HINT :
+			if(game_over==0)
+				hintNumero();
+			break;
+		case RESOLVER :
+			if(game_over==0)
+				autoCompletar();
+			break;
+		case NOVO_JOGO :
+				novoJogo();
+			break;
+		case SAIR :
+			exit(0);
+			break;
+	}
+	
+	DesenhaNumeros();
+	glutPostRedisplay();
+}
+
+void createGLUTMenus() {
+
+		// create the menu and
+		// tell glut that "processMenuEvents" will
+		// handle the events
+		menu = glutCreateMenu(processMenuEvents);
+
+		//add entries to our menu
+		glutAddMenuEntry("Hint",HINT);
+		glutAddMenuEntry("Resolver",RESOLVER);
+		glutAddMenuEntry("Novo Jogo",NOVO_JOGO);
+		glutAddMenuEntry("Sair",SAIR);
+
+		// attach the menu to the right button
+		glutAttachMenu(GLUT_RIGHT_BUTTON);
+
+}
+
 
 /* 
  * ===  FUNCTION  ======================================================================
@@ -974,6 +1074,8 @@ int main(int argc, char** argv)
 	glutSpecialFunc(menuTecladoSpecHandle);
 	// Registra a fun��o callback para tratamento do mouse
 	glutMouseFunc(GerenciaMouse);  
+	
+	
 	
 	// ATIVA A JANELA EM FULLSCREEN
 	glutFullScreen();
