@@ -79,14 +79,13 @@ double	altura_bloco = 1.0, 	// altura de cada box do menu
 int	menu_limit = 3; 	// limite do menu, usado em menuInicial e menuDificuldade
 
 
-/*-----------------------------------------------------------------------------
- * VARIÁVEIS e CABEÇALHOS DE FUNÇÕES ASSOCIADOS AO SUDOKU 
- *-----------------------------------------------------------------------------*/
 void setaValores(int dificuldade);
 void desenhaMenuDificuldade(void);
 void desenhaMenu();
+void desenhaCreditos();
 void menuDificuldadeTecladoHandle(unsigned char key, int x, int y);
 void menuTecladoHandle(unsigned char key, int x, int y);
+void creditosTecladoHandle(unsigned char key, int x, int y);
 void menuTecladoSpecHandle(int key, int x, int y);
 void escreveMenuDificuldadeTexto(int choos, double x, double y);
 void DesenhaFudoTabuleiro();
@@ -705,6 +704,8 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 			printf("Dificuldade\n");
 			break;
 		case 1:
+			glutDisplayFunc(desenhaCreditos);
+			glutKeyboardFunc(creditosTecladoHandle);
 			// mostra os créditos [não implementado]
 			break;
 		case 2:
@@ -804,6 +805,92 @@ void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
 		glutSpecialFunc(sudokuTecladoSpecHandle);
 		glutDisplayFunc(Desenha);
 		glutKeyboardFunc(tecladoSudoku);
+	}
+
+	glutPostRedisplay();
+}
+
+/****
+ *		ROTINAS RELACIONADAS AOS CRÉDITOS 
+ ****/
+
+void printStrokeString(char *s)
+{
+
+	for (int i = 0; s[i] != '\0'; ++i)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, s[i]);
+}
+
+void desenhaCreditos()
+{
+	char author[3][50] = {
+		"Gustavo Marques",
+		"Jardel Lima",
+		"Leonardo Cavalcante do Prado"
+	},
+	
+	email[3][50] = {
+		"gutodisse@gmail.com",
+		"jardel.lima@gmail.com",
+		"leolleo.comp@gmail.com"
+	};
+	
+	glClear(GL_COLOR_BUFFER_BIT);
+	glViewport(0, 0, largura, altura);
+
+	glPushMatrix();
+
+	glTranslatef(4,8.8,0);
+	glScalef(8,1,0);
+
+	glBegin(GL_QUADS);
+		glColor3f(0.7f, 0.7f, 0.7f);
+		glVertex2f(0,0);
+		glVertex2f(1,0);
+		glColor3f(0.4, 0.4, 0.4);
+		glVertex2f(1,1);
+		glVertex2f(0,1);
+	glEnd();
+
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(win_lagura / 2. - 1.5, win_altura / 2. + 3, 0);
+		glScalef(0.005, 0.005, 0);
+		glLineWidth(4);
+		glColor3f(AZUL);
+		printStrokeString("Creditos");	
+	glPopMatrix();
+
+
+	for (int k = 0; k < 3; ++k) {
+		glPushMatrix();
+		glTranslatef(win_lagura / 2. - 3.5, win_altura / 2. - k, 0);
+		glLineWidth(2);
+		glScalef(0.002, 0.002, 0.0);
+		glColor3f(AZUL);
+		printStrokeString(author[k]);
+		printStrokeString(", ");
+		glColor3f(VERMELHO);
+		printStrokeString(email[k]);
+		glPopMatrix();
+	}
+
+	glPushMatrix();
+		glTranslatef(win_lagura / 2. - 1.25, win_altura / 2. - 3, 0);
+		glScalef(0.002, 0.002, 0);
+		glLineWidth(2);
+		glColor3f(AZUL);
+		printStrokeString("ESC - voltar");	
+	glPopMatrix();
+	glFlush();
+}
+
+void creditosTecladoHandle(unsigned char key, int x, int y)
+{
+	if (key == 27) { // esc
+		glutDisplayFunc(desenhaMenu);	
+		glutKeyboardFunc(menuTecladoHandle);
 	}
 
 	glutPostRedisplay();
