@@ -111,12 +111,9 @@ void Escreve(float x, float y, char value)
 {
 	glPushMatrix();
 	glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
-	//glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
-	//glLoadIdentity(); // reinicializa as transforma��es  
 	glTranslatef(3.2+x,2.1+y,0);	/* posiciona com base na matrix */
 	glScalef(0.008, 0.008, 0.008);  /* diminui o tamanho do fonte	*/
 	glLineWidth(2); 		/* define a espessura da linha 	*/
-	//temp = x+48; 			/* CONVERS�O ASCII 		*/
 	glutStrokeCharacter(GLUT_STROKE_ROMAN,value);
 	
 	glPopMatrix();
@@ -220,7 +217,6 @@ void DesenhaTabela()
  */
 void DesenhaCaixaSelecionado(GLfloat x1, GLfloat y1)
 {	
-	//printf("Here");
 	// Muda para o sistema de coordenadas do modelo
 	glMatrixMode(GL_MODELVIEW);
 	// Inicializa a matriz de transformação corrente
@@ -261,9 +257,9 @@ void DesenhaCaixaSelecionado(GLfloat x1, GLfloat y1)
 
 void DesenhaCaixaErro(GLfloat x1, GLfloat y1)
 {	
-	//printf("Here");
 	// Muda para o sistema de coordenadas do modelo
 	glMatrixMode(GL_MODELVIEW);
+
 	// Inicializa a matriz de transformação corrente
 	glLoadIdentity();
 	
@@ -285,7 +281,6 @@ void DesenhaCaixaErro(GLfloat x1, GLfloat y1)
 
 void DesenhaFudoTabuleiro()
 {	
-	//printf("Here");
 	// Muda para o sistema de coordenadas do modelo
 	glMatrixMode(GL_MODELVIEW);
 	// Inicializa a matriz de transformação corrente
@@ -296,11 +291,6 @@ void DesenhaFudoTabuleiro()
 	glTranslatef(3.0f,2.0f,0.0f);
 	
 	glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
-	
-	
-	//glTranslatef(10.5f,0.0f,0.0f);
-	//glTranslatef(5.0,4.0,0.0f);
-	
 	
 	glColor3f ( BRANCO );
 	glBegin(GL_QUADS);      
@@ -315,6 +305,7 @@ void DesenhaFudoTabuleiro()
 	glPopMatrix();
 	glFlush();
 }
+
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  Desenha
@@ -340,6 +331,7 @@ void Desenha(void)
 		desenhaMenuFimDeJogo();
 	
 	legenda();
+
 	// Executa os comandos OpenGL 
 	glFlush();
 }
@@ -364,18 +356,13 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	
-	// Estabelece a janela de sele��o (esquerda, direita, inferior, 
-	// superior) mantendo a propor��o com a janela de visualiza��o
-	//gluOrtho2D (-win*aspecto, win*aspecto, -win, win);
-	
-//	gluOrtho2D(-7.5f,8.5f,-5.5,6.5f);
 	gluOrtho2D(0.0f,16.0f,0.0f,12.0f);
 }
 
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  Teclado
- *  Description:  Fun��o callback chamada para gerenciar eventos de teclas
+ *  Description:  Função callback chamada para gerenciar eventos de teclas
  * =====================================================================================
  */
  
@@ -383,12 +370,13 @@ void makedelay(int){
 
 	Desenha();
 	angulo_rotacao++;
-	if(angulo_rotacao<=360)
+
+	if(angulo_rotacao <= 360)
 		glutTimerFunc(0.2,makedelay,1);
-	else{
+	else {
 		angulo_rotacao = 0;
 		return;
-		}
+	}
 }
 
 void novoJogo(){
@@ -524,7 +512,7 @@ void tecladoSudoku(unsigned char key, int x, int y)
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  GerenciaMouse
- *  Description:  Fun��o callback chamada para gerenciar eventos do mouse
+ *  Description:  Função callback chamada para gerenciar eventos do mouse
  * =====================================================================================
  */
 void GerenciaMouse(int button, int state, int x, int y)
@@ -676,18 +664,12 @@ void desenhaMenu()
 
 void desenhaMenuFimDeJogo()
 {
-	// Limpa a janela de visualiza��o com a cor  
-	// de fundo definida previamente
-	//glClear(GL_COLOR_BUFFER_BIT);
-	//glMatrixMode(GL_MODELVIEW);
-
-	// Define a Viewport 1
-	//glViewport(0, 0, largura, altura);
 	float st_x = 12.5;
 	float st_y = 7.5;
 	float largura_bloco = 3.0;
 	
 	glPushMatrix();
+
 	// desenha caixas de diálogo
 	for (int i = 0; i < 2; i++) {
 		glBegin(GL_QUADS);
@@ -812,6 +794,7 @@ void escreveMenuDificuldadeTexto(int choos, double x, double y)
 void desenhaMenuDificuldade()
 {
 	glutDestroyMenu(menu);
+
 	// Limpa a janela de visualiza��o com a cor  
 	// de fundo definida previamente
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -1037,20 +1020,18 @@ int main(int argc, char** argv)
 	// Init 
 	glutInit(&argc, argv);
 	
-	printf ("Pixel Dimensions: %d x %d \n",/*glutGet (GLUT_SCREEN_WIDTH_MM) / */glutGet (GLUT_SCREEN_WIDTH),
-            /*glutGet (GLUT_SCREEN_HEIGHT_MM) /*/ glutGet(GLUT_SCREEN_HEIGHT));
-	
-	printf ("Pixel Dimensions: %f x %f \n",/*glutGet (GLUT_SCREEN_WIDTH_MM) / */glutGet (GLUT_SCREEN_WIDTH)/16.0,
-            /*glutGet (GLUT_SCREEN_HEIGHT_MM) /*/ glutGet(GLUT_SCREEN_HEIGHT)/12.0);
+	printf ("Pixel Dimensions: %d x %d \n",glutGet (GLUT_SCREEN_WIDTH), glutGet(GLUT_SCREEN_HEIGHT));
+	printf ("Pixel Dimensions: %f x %f \n", glutGet (GLUT_SCREEN_WIDTH)/16.0, glutGet(GLUT_SCREEN_HEIGHT)/12.0);
+
 	printf("%d %d", altura,largura);
 	    
    	du_largura = glutGet (GLUT_SCREEN_WIDTH)/win_lagura;
     	du_altura = glutGet(GLUT_SCREEN_HEIGHT)/win_altura;
        	
-	// Define do modo de opera��o da GLUT
+	// Define do modo de operação da GLUT
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB); 
  
-	// Especifica a posi��o inicial da janela GLUT
+	// Especifica a posição inicial da janela GLUT
 	glutInitWindowPosition(5,5); 
     
 	// Especifica o tamanho inicial em pixels da janela GLUT
@@ -1059,28 +1040,25 @@ int main(int argc, char** argv)
 	// Cria a janela passando como argumento o t�tulo da mesma
 	glutCreateWindow("Sudoku");
  
-	// Registra a fun��o callback de redesenho da janela de visualiza��o
-	// glutDisplayFunc(Desenha);
+	// Registra a função callback de redesenho da janela de visualiza��o
  	glutDisplayFunc(desenhaMenu); 
-	// Registra a fun��o callback de redimensionamento da janela de visualiza��o
+	
+	// Registra a função callback de redimensionamento da janela de visualiza��o
 	glutReshapeFunc(AlteraTamanhoJanela);
 
-	// Registra a fun��o callback para tratamento das teclas ASCII
-	// glutKeyboardFunc (tecladoSudoku);
+	// Registra a função callback para tratamento das teclas ASCII
 	glutKeyboardFunc(menuTecladoHandle);
   
-	// Registra a fun��o de callback para tratamento de teclas especiais
-	//glutSpecialFunc (TecladoEspecial);
+	// Registra a função de callback para tratamento de teclas especiais
 	glutSpecialFunc(menuTecladoSpecHandle);
-	// Registra a fun��o callback para tratamento do mouse
+
+	// Registra a função callback para tratamento do mouse
 	glutMouseFunc(GerenciaMouse);  
-	
-	
 	
 	// ATIVA A JANELA EM FULLSCREEN
 	glutFullScreen();
 	
-	// Chama a fun��o respons�vel por fazer as inicializa��es 
+	// Chama a função responsável por fazer as inicializa��es 
 	Inicializa();
  
 	// Inicia o processamento e aguarda intera��es do usu�rio
