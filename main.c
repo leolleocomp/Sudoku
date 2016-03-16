@@ -122,20 +122,63 @@ void Escreve(float x, float y, char value)
 	glPopMatrix();
 }
 
-void legenda()
+void legenda(char str[])
 {
-	  char c[100] = "Atalhos do Teclado: 'q' ou 'Esc'- Sair do Jogo  |  'p' - Resolver Sudoku  |  'h' - Hint.";
+	  char *c;
+	  c =str;
 	  
 	  glPushMatrix();
 	  glTranslatef(0.1,0.2,0.0);
 	  glScalef(0.002, 0.002, 0.002); 
   	  glColor3f( PRETO );
+  	   glLineWidth( 2.0 );
   		
 	  for (int i=0; c[i]!='\0'; i++)
 	  {
     		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
 	  }
 	  glPopMatrix();
+}
+
+void sudokuNome()
+{
+	  char *c;
+	  c ="Sudoku";
+	  
+	  glPushMatrix();
+	  glTranslatef(0.1,11.2,0.0);
+	  glScalef(0.005, 0.005, 0.005); 
+  	  glColor3f( PRETO );
+  	   glLineWidth( 3.0 );
+  		
+	  for (int i=0; c[i]!='\0'; i++)
+	  {
+    		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
+	  }
+	  glPopMatrix();
+}
+
+
+void vcGanhou(char str[])
+{
+	  char *c;
+	  c =str;
+	  
+	  glPushMatrix();
+	  glTranslatef(3.0,1.0,0.0);
+	  glScalef(0.008, 0.008, 0.008); 
+	  glLineWidth(3.0 );
+  	  glColor3f( VERMELHO );
+  		
+	  for (int i=0; c[i]!='\0'; i++)
+	  {
+    		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
+	  }
+	  
+	  glLineWidth(1.0 );
+	  glPopMatrix();
+	  
+//	  glFlush();
 }
 
 
@@ -330,16 +373,21 @@ void Desenha(void)
 	// Define a Viewport 1
 	glViewport(0, 0, largura, altura);
 	
+	sudokuNome();	
+	
 	// DESENHA AS LINHAS DA TABELA
 	DesenhaTabela();
 	
 	// DESENHA OS NUMEROS DA MATRIX SUDOKU
 	DesenhaNumeros();
 	
-	if(game_over==1)
+	if(game_over==1 || game_over == 2){
 		desenhaMenuFimDeJogo();
-	
-	legenda();
+		if(game_over == 1)
+			vcGanhou("Voce Conseguiu!!!");
+	}
+		
+	legenda("Atalhos do Teclado: 'q' ou 'Esc'- Sair do Jogo  |  'p' - Resolver Sudoku  |  'h' - Hint.");
 	// Executa os comandos OpenGL 
 	glFlush();
 }
@@ -397,6 +445,8 @@ void novoJogo(){
 	glutKeyboardFunc(menuDificuldadeTecladoHandle);
 	glutSpecialFunc(menuTecladoSpecHandle);
 	game_over = 0;
+	linha = 0;
+	coluna = 0;
 }
 
 void autoCompletar(){
@@ -407,7 +457,7 @@ void autoCompletar(){
 	Csudoku = Csudoku_preenchido;
 	glutTimerFunc(1,makedelay,1);
 	angulo_rotacao = 0;
-	game_over = 1;
+	game_over = 2;
 	
 }
 
@@ -456,8 +506,12 @@ void tecladoSudoku(unsigned char key, int x, int y)
 			
 			Csudoku.print();
 			
-			if (Csudoku.isComplete())
-				key = 'p';
+			if (Csudoku.isComplete()){
+				//vcGanhou("Voce Conseguiu!!!");
+				//key = 'p';
+				isComplete();
+			}
+				
 		}
 	}
 	
@@ -470,8 +524,10 @@ void tecladoSudoku(unsigned char key, int x, int y)
 				sleep(1);
 			}
 			
-			if (Csudoku.isComplete())
+			if (Csudoku.isComplete()){
 				key = 'p';
+			}
+				
 	}
 	
 	switch(key)
@@ -488,12 +544,13 @@ void tecladoSudoku(unsigned char key, int x, int y)
 			op.solve(Csudoku_preenchido, 0);
 			Csudoku = Csudoku_preenchido;
 			glutTimerFunc(1,makedelay,1);
+			//vcGanhou("Voce Conseguiu!!!");
 			angulo_rotacao = 0;
-			game_over = 1;
+			game_over = 2;
 		
 			break;
 		case 13://Enter
-			if(game_over==1){
+			if(game_over==1 || game_over == 2){
 				glutDestroyMenu(menu);
 				game_over = 0;
 				if(box_select_fim==0){
