@@ -153,7 +153,7 @@ int SudokuOpr::countSolutions(Sudoku &table, int elem)
 	int r = elem / 9, c = elem % 9;
 
 	if (table.get(r, c) > 0)
-		return solve(table, elem + 1);	
+		cont += solve(table, elem + 1);	
 	else
 		for (int k = 1; k <= 9; ++k)
 			if (table.canBePut(k, r, c)) {
