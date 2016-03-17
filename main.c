@@ -100,127 +100,474 @@ void desenhaMenuFimDeJogo();
 void escreveMenuTextoFimDeJogo(int choos, double x, double y);
 void createGLUTMenus();
 void DesenhaCaixaSelecionado(GLfloat x1, GLfloat y1);
+void Desenha(void);
+void DesenhaNumeros();
+void tecladoSudoku(unsigned char key, int x, int y);
+void DesenhaCaixaErro(GLfloat x1, GLfloat y1);
+
+/****
+ *		FUNÇÕES AUXILIARES
+ ****/
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  Escreve
- *  Description:  Fun��o que recebe o caracter e a posição que o mesmo vais ser exibido na
- *		    	  tela usando fonte de linhas
+ *         Name:  makedelay
+ *  Description:  Função que faz a animação final
  * =====================================================================================
  */
-void Escreve(float x, float y, char value)
-{
-	glPushMatrix();
-	glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
-	glTranslatef(3.2+x,2.1+y,0);	/* posiciona com base na matrix */
-	glScalef(0.008, 0.008, 0.008);  /* diminui o tamanho do fonte	*/
-	glLineWidth(2); 		/* define a espessura da linha 	*/
-	glutStrokeCharacter(GLUT_STROKE_ROMAN,value);
+ 
+void makedelay(int){
+
+	Desenha();
+	angulo_rotacao++;
+
+	if(angulo_rotacao <= 360)
+		glutTimerFunc(0.2,makedelay,1);
+	else {
+		angulo_rotacao = 0;
+		return;
+	}
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  novoJogo
+ *  Description:  Função que inicia um novo jogo
+ * =====================================================================================
+ */
+ 
+void novoJogo(){
 	
+	glutDisplayFunc(desenhaMenuDificuldade);
+	glutKeyboardFunc(menuDificuldadeTecladoHandle);
+	glutSpecialFunc(menuTecladoSpecHandle);
+	game_over = 0;
+	linha = 0;
+	coluna = 0;
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  autoCompletar
+ *  Description:  Função que resolve o Soduku
+ * =====================================================================================
+ */
+ 
+void autoCompletar(){
+	
+	SudokuOpr op;
+
+	op.solve(Csudoku_preenchido, 0);
+	Csudoku = Csudoku_preenchido;
+	glutTimerFunc(1,makedelay,1);
+	angulo_rotacao = 0;
+	game_over = 2;
+	
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  isComplete
+ *  Description:  Função que verifica se o tabuleiro foi preenchido
+ * =====================================================================================
+ */
+ 
+void isComplete(){
+	SudokuOpr op;
+	op.solve(Csudoku_preenchido, 0);
+	Csudoku = Csudoku_preenchido;
+	glutTimerFunc(1,makedelay,1);
+	angulo_rotacao = 0;
+	game_over = 1;
+	
+	
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  hintNumero
+ *  Description:  Função que preenchi a casa selecionada com o valor válido
+ * =====================================================================================
+ */
+ void hintNumero(){
+	
+	Csudoku_preenchido.mark(Csudoku_resolvido.get(linha, coluna), linha, coluna);
+	Csudoku_preenchido.print();
+			
+	if (!Csudoku.mark(Csudoku_preenchido.get(linha, coluna), linha, coluna)) {
+		DesenhaCaixaErro(linha+3,10-coluna);
+		sleep(1);
+	}
+	
+	if (Csudoku.isComplete())
+		isComplete();
+}
+
+/****
+ *		FUNÇÕES DE ALTERAÇÃO DO TAMANHO DA TELA
+ ****/
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  AlteraTamanhoJanela
+ *  Description:  Fun��o callback chamada quando o tamanho da janela � alterado
+ * =====================================================================================
+ */
+void AlteraTamanhoJanela(GLsizei w, GLsizei h)
+{	
+	// Evita a divisao por zero
+	if(h == 0) h = 1;
+	
+	// Atualiza as vari�veis
+	largura = w;
+	altura = h;
+
+	aspecto = (float) largura/altura;	
+	// Inicializa o sistema de coordenadas
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	
+	gluOrtho2D(0.0f,16.0f,0.0f,12.0f);
+}
+
+/****
+ *		FUNÇÃO DE MOUSE
+ ****/ 
+ 
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  GerenciaMouse
+ *  Description:  Função callback chamada para gerenciar eventos do mouse
+ * =====================================================================================
+ */
+void GerenciaMouse(int button, int state, int x, int y)
+{       
+	int i;
+
+	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	{
+		linha 	= (int)((x/du_largura)-3);
+		coluna  = (int)((y/du_altura)-1);
+		
+		printf("coluna[%d]linha[%d]\n", (int)((x/du_largura)-3),(int)((y/du_altura)-1)); 
+
+	}  
+	
+	glutPostRedisplay();
+}
+ 
+/****
+ *		ROTINAS RELACIONADAS AO MENU INICIAL
+ ****/
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  escreveMenuTexto
+ *  Description:  Função que desenah o texto do menu inicial
+ * =====================================================================================
+ */
+ 
+void escreveMenuTexto(int choos, double x, double y)
+{
+	char menu[3][10] = {
+				"JOGAR",
+				"CREDITOS",
+				"SAIR"
+			 };
+
+	glPushMatrix();
+
+	double delta[] = { 1.5, 1.5, 1.5 };
+
+	glTranslatef(x + largura_bloco / 2.0 - delta[choos], y - altura_bloco, 0.0f);
+	glScalef(0.005, 0.005, 0.0);
+	glLineWidth(2);
+
+	for (int i = 0; menu[choos][i] != '\0'; ++i)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, menu[choos][i]);
+
 	glPopMatrix();
 }
 
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  legenda
- *  Description:  Fun��o que recebe o texto que vai ser exebido como legenda no parte
- *				  Inferior da tela
- * =====================================================================================
- */
-void legenda(char str[])
-{
-	  char *c;
-	  c =str;
-	  
-	  glPushMatrix();
-	  glTranslatef(0.1,0.2,0.0);
-	  glScalef(0.002, 0.002, 0.002); 
-  	  glColor3f( PRETO );
-  	   glLineWidth( 2.0 );
-  		
-	  for (int i=0; c[i]!='\0'; i++)
-	  {
-    		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
-	  }
-	  glPopMatrix();
-}
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  sudokuNOme
- *  Description:  Fun��o que recebe o escreve o nome Sudoku no canto superior esquerdo 
- *				  Da tela.
+ *         Name:  desenhaMenuFimDeJogo
+ *  Description:  Função que desenah o menu do fim do jogo
  * =====================================================================================
  */
-void sudokuNome()
+void desenhaMenuFimDeJogo()
 {
-	  char *c;
-	  c ="Sudoku";
-	  
-	  glPushMatrix();
-	  glTranslatef(0.1,11.2,0.0);
-	  glScalef(0.005, 0.005, 0.005); 
-  	  glColor3f( PRETO );
-  	   glLineWidth( 3.0 );
-  		
-	  for (int i=0; c[i]!='\0'; i++)
-	  {
-    		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
-	  }
-	  glPopMatrix();
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  vcGanhou
- *  Description:  Funçaoo que recebe o texto que vai ser exebido quando o usuário 
- *				  Completar o Soduku
- * =====================================================================================
- */
-void vcGanhou(char str[])
-{
-	  char *c;
-	  c =str;
-	  
-	  glPushMatrix();
-	  glTranslatef(3.0,1.0,0.0);
-	  glScalef(0.008, 0.008, 0.008); 
-	  glLineWidth(3.0 );
-  	  glColor3f( VERMELHO );
-  		
-	  for (int i=0; c[i]!='\0'; i++)
-	  {
-    		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
-	  }
-	  
-	  glLineWidth(1.0 );
-	  glPopMatrix();
-	  
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  DesenhaNumeros
- *  Description:  Funçaoo que recebe escreve os numeros no tabuleiro
- * =====================================================================================
- */
-void DesenhaNumeros()
-{
-	int x,y;
-	char temp=1;
+	float st_x = 12.5;
+	float st_y = 7.5;
+	float largura_bloco = 3.0;
 	
-	for(x=0;x<9;x++)
-		for(y=0;y<9;y++)
-			if(sudoku[x][8-y] != -1) {
-				if (Csudoku_preenchido.get(x, 8 - y) > 0)
-					glColor3f(PRETO);
-				else
-					glColor3f(AZUL);
+	glPushMatrix();
 
-				Escreve(x, y, Csudoku.get(x, 8 - y) < 0 ? ' ' : Csudoku.get(x, 8 - y) + '0');
-			}
+	// desenha caixas de diálogo
+	for (int i = 0; i < 2; i++) {
+		glBegin(GL_QUADS);
+			if (i != box_select_fim)
+				glColor3f(PRETO);
+			else 
+				glColor3f(VERMELHO);
+
+			glVertex2f(st_x, st_y);
+			glVertex2f(st_x, st_y  - altura_bloco);
+			glVertex2f(st_x + largura_bloco, st_y - altura_bloco);
+			glVertex2f(st_x + largura_bloco, st_y); 
+		glEnd();
+
+		glColor3f(AZUL);
+		escreveMenuTextoFimDeJogo(i, st_x - 2.2, st_y + 0.3);
+
+		glTranslatef(0.0f, - (altura_bloco + space), 0.0f);
+	}
+
+	glPopMatrix();
+	glFlush();
 }
 
+
+/****
+ *		ROTINAS RELACIONADAS AO MENU DE DIFICULDADE 
+ ****/
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  escreveMenuDificuldadeTexto
+ *  Description:  Função que desenha o texto do menu dificuldade
+ * =====================================================================================
+ */
+ void escreveMenuDificuldadeTexto(int choos, double x, double y)
+{
+	char menu[3][10] = {
+				"FACIL",
+				"MEDIO",
+				"DIFICIL" };
+
+	glPushMatrix();
+
+	// não consegui centralizar esse texto ainda..
+	double delta[] = { 1., 1., 1. };
+
+	glTranslatef(x + largura_bloco / 2.0 - delta[choos], y - altura_bloco, 0.0f);
+
+	glScalef(0.005, 0.005, 0.0);
+	glLineWidth(2);
+
+	for (int i = 0; menu[choos][i] != '\0'; ++i)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, menu[choos][i]);
+
+	glPopMatrix();
+}
+
+
+/****
+ *		ROTINAS RELACIONADAS AOS CRÉDITOS 
+ ****/
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  creditosDelay
+ *  Description:  Função que faz a animação dos créditos
+ * =====================================================================================
+ */
+ void creditosDelay(int value)
+{
+	tr_y += .01;
+	if (tr_y > 0.) return;
+	glutPostRedisplay();
+	glutTimerFunc(12.5, creditosDelay, 1);
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  printStrokeString
+ *  Description:  Função que recebe uma string e desenah na tela
+ * =====================================================================================
+ */
+ void printStrokeString(char *s)
+{
+
+	for (int i = 0; s[i] != '\0'; ++i)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, s[i]);
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  desenhaCreditos
+ *  Description:  Função que desenha o texto dos créditos
+ * =====================================================================================
+ */
+ void desenhaCreditos()
+{
+	char author[3][50] = {
+		"Gustavo Marques",
+		"Jardel Lima",
+		"Leonardo Cavalcante do Prado"
+	},
+	
+	email[3][50] = {
+		"gutodisse@gmail.com",
+		"jardelribeiro.lima@gmail.com",
+		"leolleo.comp@gmail.com"
+	};
+	
+	glClear(GL_COLOR_BUFFER_BIT);
+	glViewport(0, 0, largura, altura);
+
+	glPushMatrix();
+	glTranslatef(0,tr_y,0);
+
+	glPushMatrix();
+
+	glTranslatef(4,8.8,0);
+	glScalef(8,1,0);
+
+	glBegin(GL_QUADS);
+		glColor3f(0.7f, 0.7f, 0.7f);
+		glVertex2f(0,0);
+		glVertex2f(1,0);
+		glColor3f(0.4, 0.4, 0.4);
+		glVertex2f(1,1);
+		glVertex2f(0,1);
+	glEnd();
+
+	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(win_lagura / 2. - 1.5, win_altura / 2. + 3, 0);
+		glScalef(0.005, 0.005, 0);
+		glLineWidth(4);
+		glColor3f(AZUL);
+		printStrokeString("Creditos");	
+	glPopMatrix();
+
+
+	for (int k = 0; k < 3; ++k) {
+		glPushMatrix();
+		glTranslatef(win_lagura / 2. - 3.5, win_altura / 2. - k, 0);
+		glLineWidth(2);
+		glScalef(0.002, 0.002, 0.0);
+		glColor3f(AZUL);
+		printStrokeString(author[k]);
+		printStrokeString(", ");
+		glColor3f(VERMELHO);
+		printStrokeString(email[k]);
+		glPopMatrix();
+	}
+
+	glPushMatrix();
+		glTranslatef(win_lagura / 2. - 1.25, win_altura / 2. - 3, 0);
+		glScalef(0.002, 0.002, 0);
+		glLineWidth(2);
+		glColor3f(AZUL);
+		printStrokeString("ESC - voltar");	
+	glPopMatrix();
+	glPopMatrix();
+	
+	glFlush();
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  Teclado
+ *  Description:  Função callback chamada para gerenciar eventos de teclas da tela de 
+ *				  créditos
+ * =====================================================================================
+ */
+void creditosTecladoHandle(unsigned char key, int x, int y)
+{
+	if (key == 27) { // esc
+		glutDisplayFunc(desenhaMenu);	
+		glutKeyboardFunc(menuTecladoHandle);
+	}
+
+	glutPostRedisplay();
+}
+
+/****
+ *		SUDOKU LÓGICA E LÓGICA PESADA	
+ ****/
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  setaValores 
+ *  Description:  seleciona um item do menu 
+ * =====================================================================================
+ */
+void setaValores(int dificuldade)
+{
+	SudokuOpr op(dificuldade);
+	op.randomGen(Csudoku);
+	Csudoku_preenchido = Csudoku;
+    Csudoku_resolvido  = Csudoku;
+    op.solve(Csudoku_resolvido, 0);
+
+}
+
+/****
+ *		FUNÇÕES DO MENU DO MOUSE
+ ****/
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  processMenuEvents
+ *  Description:  Função que processa os eventos do menu do mouse
+ * =====================================================================================
+ */
+void processMenuEvents(int option) {
+
+	switch (option) {
+		case HINT :
+			if(game_over==0)
+				hintNumero();
+			break;
+		case RESOLVER :
+			if(game_over==0)
+				autoCompletar();
+			break;
+		case NOVO_JOGO :
+				novoJogo();
+			break;
+		case SAIR :
+			exit(0);
+			break;
+	}
+	
+	DesenhaNumeros();
+	glutPostRedisplay();
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  createGLUTMenus
+ *  Description:  Função que cria o menu do mouse
+ * =====================================================================================
+ */
+void createGLUTMenus() {
+
+		// create the menu and
+		// tell glut that "processMenuEvents" will
+		// handle the events
+		menu = glutCreateMenu(processMenuEvents);
+
+		//add entries to our menu
+		glutAddMenuEntry("Hint",HINT);
+		glutAddMenuEntry("Resolver",RESOLVER);
+		glutAddMenuEntry("Novo Jogo",NOVO_JOGO);
+		glutAddMenuEntry("Sair",SAIR);
+
+		// attach the menu to the right button
+		glutAttachMenu(GLUT_RIGHT_BUTTON);
+
+}
+
+/****
+ *		FUNÇÕES DE DESENHO
+ ****/
+ 
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  DesenhaTabela
@@ -385,160 +732,309 @@ void DesenhaFudoTabuleiro()
 	glFlush();
 }
 
+/****
+ *		FUNÇÕES DE DESENHO DE TEXTOS
+ ****/
+ 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  Desenha
- *  Description:  Fun��o de callback de redesenho da janela de visualiza��o
+ *         Name:  escreveMenuTextoFimDeJogo
+ *  Description:  Função que desenha o texto do menu do fim do jogo
  * =====================================================================================
  */
-void Desenha(void)
+void escreveMenuTextoFimDeJogo(int choos, double x, double y)
 {
-	// Limpa a janela de visualiza��o com a cor  
-	// de fundo definida previamente
-	glClear(GL_COLOR_BUFFER_BIT);
+	char menu[2][10] = {
+				"NOVO JOGO",
+				"SAIR"
+			 };
 
-	// Define a Viewport 1
-	glViewport(0, 0, largura, altura);
-	
-	sudokuNome();	
-	
-	// DESENHA AS LINHAS DA TABELA
-	DesenhaTabela();
-	
-	// DESENHA OS NUMEROS DA MATRIX SUDOKU
-	DesenhaNumeros();
-	
-	if(game_over==1 || game_over == 2){
-		desenhaMenuFimDeJogo();
+	glPushMatrix();
 
-		if(game_over == 1)
-			vcGanhou("Voce Conseguiu!!!");
-	}
-		
-	legenda("Atalhos do Teclado: 'q' ou 'Esc'- Sair do Jogo  |  'p' - Resolver Sudoku  |  'h' - Hint.");
+	double delta[] = { 1.5, 1.5, 1.5 };
 
-	// Executa os comandos OpenGL 
-	glFlush();
+	glTranslatef(x + largura_bloco / 2.0 - delta[choos], y - altura_bloco, 0.0f);
+	glScalef(0.003, 0.003, 0.0);
+	glLineWidth(2);
+
+	for (int i = 0; menu[choos][i] != '\0'; ++i)
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, menu[choos][i]);
+
+	glPopMatrix();
 }
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  AlteraTamanhoJanela
- *  Description:  Fun��o callback chamada quando o tamanho da janela � alterado
+ *         Name:  Escreve
+ *  Description:  Fun��o que recebe o caracter e a posição que o mesmo vais ser exibido na
+ *		    	  tela usando fonte de linhas
  * =====================================================================================
  */
-void AlteraTamanhoJanela(GLsizei w, GLsizei h)
+void Escreve(float x, float y, char value)
+{
+	glPushMatrix();
+	glRotatef(angulo_rotacao,0.0f,0.0f,1.0f);
+	glTranslatef(3.2+x,2.1+y,0);	/* posiciona com base na matrix */
+	glScalef(0.008, 0.008, 0.008);  /* diminui o tamanho do fonte	*/
+	glLineWidth(2); 		/* define a espessura da linha 	*/
+	glutStrokeCharacter(GLUT_STROKE_ROMAN,value);
+	
+	glPopMatrix();
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  legenda
+ *  Description:  Fun��o que recebe o texto que vai ser exebido como legenda no parte
+ *				  Inferior da tela
+ * =====================================================================================
+ */
+void legenda(char str[])
+{
+	  char *c;
+	  c =str;
+	  
+	  glPushMatrix();
+	  glTranslatef(0.1,0.2,0.0);
+	  glScalef(0.002, 0.002, 0.002); 
+  	  glColor3f( PRETO );
+  	   glLineWidth( 2.0 );
+  		
+	  for (int i=0; c[i]!='\0'; i++)
+	  {
+    		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
+	  }
+	  glPopMatrix();
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  sudokuNOme
+ *  Description:  Fun��o que recebe o escreve o nome Sudoku no canto superior esquerdo 
+ *				  Da tela.
+ * =====================================================================================
+ */
+void sudokuNome()
+{
+	  char *c;
+	  c ="Sudoku";
+	  
+	  glPushMatrix();
+	  glTranslatef(0.1,11.2,0.0);
+	  glScalef(0.005, 0.005, 0.005); 
+  	  glColor3f( PRETO );
+  	   glLineWidth( 3.0 );
+  		
+	  for (int i=0; c[i]!='\0'; i++)
+	  {
+    		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
+	  }
+	  glPopMatrix();
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  vcGanhou
+ *  Description:  Funçaoo que recebe o texto que vai ser exebido quando o usuário 
+ *				  Completar o Soduku
+ * =====================================================================================
+ */
+void vcGanhou(char str[])
+{
+	  char *c;
+	  c =str;
+	  
+	  glPushMatrix();
+	  glTranslatef(3.0,1.0,0.0);
+	  glScalef(0.008, 0.008, 0.008); 
+	  glLineWidth(3.0 );
+  	  glColor3f( VERMELHO );
+  		
+	  for (int i=0; c[i]!='\0'; i++)
+	  {
+    		glutStrokeCharacter(GLUT_STROKE_ROMAN , c[i]);
+	  }
+	  
+	  glLineWidth(1.0 );
+	  glPopMatrix();
+	  
+}
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  DesenhaNumeros
+ *  Description:  Funçaoo que recebe escreve os numeros no tabuleiro
+ * =====================================================================================
+ */
+void DesenhaNumeros()
+{
+	int x,y;
+	char temp=1;
+	
+	for(x=0;x<9;x++)
+		for(y=0;y<9;y++)
+			if(sudoku[x][8-y] != -1) {
+				if (Csudoku_preenchido.get(x, 8 - y) > 0)
+					glColor3f(PRETO);
+				else
+					glColor3f(AZUL);
+
+				Escreve(x, y, Csudoku.get(x, 8 - y) < 0 ? ' ' : Csudoku.get(x, 8 - y) + '0');
+			}
+}
+
+/****
+ *		FUNÇÕES HANDLE DE TECLAS ESPECIAIS
+ ****/
+ 
+ /* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  menuTecladoSpecHandle 
+ *  Description:  interação com o menu inicial e de dificuldades
+ * =====================================================================================
+ */
+void menuTecladoSpecHandle(int key, int x, int y)
+{
+	if (key == GLUT_KEY_UP && box_select > 0) 
+		box_select--;
+	else  if (key == GLUT_KEY_DOWN && box_select < (menu_limit - 1))
+		box_select++;
+	
+	glutPostRedisplay();
+}
+ 
+ /* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  sudokuTecladoSpecHandle
+ *  Description:  Função callback chamada para gerenciar eventos de teclas especiais
+ * =====================================================================================
+ */
+void sudokuTecladoSpecHandle(int key, int x, int y)
 {	
-	// Evita a divisao por zero
-	if(h == 0) h = 1;
-	
-	// Atualiza as vari�veis
-	largura = w;
-	altura = h;
-
-	aspecto = (float) largura/altura;	
-	// Inicializa o sistema de coordenadas
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	
-	gluOrtho2D(0.0f,16.0f,0.0f,12.0f);
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  makedelay
- *  Description:  Função que faz a animação final
- * =====================================================================================
- */
- 
-void makedelay(int){
-
-	Desenha();
-	angulo_rotacao++;
-
-	if(angulo_rotacao <= 360)
-		glutTimerFunc(0.2,makedelay,1);
-	else {
-		angulo_rotacao = 0;
-		return;
+	if(key == GLUT_KEY_LEFT)
+	{	
+		if(game_over==0){
+			linha--;
+		
+			if(linha < 0)
+				linha = 8;
+		}	
+		else
+			box_select_fim = ++box_select_fim % 2;
 	}
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  novoJogo
- *  Description:  Função que inicia um novo jogo
- * =====================================================================================
- */
- 
-void novoJogo(){
-	
-	glutDisplayFunc(desenhaMenuDificuldade);
-	glutKeyboardFunc(menuDificuldadeTecladoHandle);
-	glutSpecialFunc(menuTecladoSpecHandle);
-	game_over = 0;
-	linha = 0;
-	coluna = 0;
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  autoCompletar
- *  Description:  Função que resolve o Soduku
- * =====================================================================================
- */
- 
-void autoCompletar(){
-	
-	SudokuOpr op;
-
-	op.solve(Csudoku_preenchido, 0);
-	Csudoku = Csudoku_preenchido;
-	glutTimerFunc(1,makedelay,1);
-	angulo_rotacao = 0;
-	game_over = 2;
-	
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  isComplete
- *  Description:  Função que verifica se o tabuleiro foi preenchido
- * =====================================================================================
- */
- 
-void isComplete(){
-	SudokuOpr op;
-	op.solve(Csudoku_preenchido, 0);
-	Csudoku = Csudoku_preenchido;
-	glutTimerFunc(1,makedelay,1);
-	angulo_rotacao = 0;
-	game_over = 1;
-	
-	
-}
-
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  hintNumero
- *  Description:  Função que preenchi a casa selecionada com o valor válido
- * =====================================================================================
- */
- void hintNumero(){
-	
-	Csudoku_preenchido.mark(Csudoku_resolvido.get(linha, coluna), linha, coluna);
-	Csudoku_preenchido.print();
-			
-	if (!Csudoku.mark(Csudoku_preenchido.get(linha, coluna), linha, coluna)) {
-		DesenhaCaixaErro(linha+3,10-coluna);
-		sleep(1);
+	else if(key == GLUT_KEY_RIGHT)
+	{
+		if(game_over==0)
+			linha = ++linha % 9;
+		else
+		{
+			box_select_fim--;
+			if(box_select_fim < 0)
+				box_select_fim = 1;
+		}
+	} 
+	else if(key == GLUT_KEY_UP)
+	{	
+		if(game_over==0){
+			coluna--;
+			if(coluna < 0)
+				coluna = 8;
+		}
+		else
+		{
+			box_select_fim--;
+			if(box_select_fim < 0)
+				box_select_fim = 1;
+		}
 	}
-	
-	if (Csudoku.isComplete())
-		isComplete();
+	else if(key == GLUT_KEY_DOWN)
+	{
+		if(game_over==0)
+			coluna = ++coluna % 9;
+		else
+			box_select_fim = ++box_select_fim % 2;
+	} 
+
+	glutPostRedisplay();
 }
 
+/****
+ *		FUNÇÕES HANDLE DE TECLAS
+ ****/
+ 
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  menuTecladoHandle 
+ *  Description:  seleciona um item do menu 
+ * =====================================================================================
+ */
+void menuTecladoHandle(unsigned char key, int x, int y)
+{
+	if (key == 13) {
+		switch (box_select) {
+		case 0:
+			menu_limit = 3;
+			glutDisplayFunc(desenhaMenuDificuldade);
+			glutKeyboardFunc(menuDificuldadeTecladoHandle);
+			glutSpecialFunc(menuTecladoSpecHandle);
+			break;
+		case 1:
+			tr_y = -10;
+			glutDisplayFunc(desenhaCreditos);
+			glutKeyboardFunc(creditosTecladoHandle);
+			glutTimerFunc(1,creditosDelay,1);
+			//tr_y = 0;
+			// mostra os créditos [não implementado]
+			break;
+		case 2:
+			// mensagem de texto bonitinha e sair [não implementado]
+			exit(EXIT_SUCCESS);
+			break;
+		}
+	}
+	if (key == 27 || key == 'q' ||key == 'Q')
+		exit(EXIT_SUCCESS);
+
+	glutPostRedisplay();
+}
+ 
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  menuDificuldadeTecladoHandle
+ *  Description:  Função callback chamada para gerenciar eventos de teclas do menu de 
+ *				  dificuldades
+ * =====================================================================================
+ */
+ void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
+{
+	int dificuldade;
+
+	if (key == 13) {
+		switch (box_select) {
+		case 0:
+			dificuldade = FACIL;
+			break;
+		case 1:
+			// mostra os créditos [não implementado]
+			dificuldade = MEDIO;
+			break;
+		case 2:
+			// mensagem de texto bonitinha e sair [não implementado]
+			dificuldade = DIFICIL;
+			break;
+		}
+		
+		createGLUTMenus();
+		setaValores(dificuldade);
+		glutSpecialFunc(sudokuTecladoSpecHandle);
+		glutDisplayFunc(Desenha);
+		glutKeyboardFunc(tecladoSudoku);
+	}
+	else if (key == 27 || key == 'q' ||key == 'Q')
+		exit(EXIT_SUCCESS);
+
+	glutPostRedisplay();
+}
 
 /* 
  * ===  FUNCTION  ======================================================================
@@ -546,7 +1042,6 @@ void isComplete(){
  *  Description:  Função callback chamada para gerenciar eventos de teclas
  * =====================================================================================
  */
- 
 void tecladoSudoku(unsigned char key, int x, int y)
 {
 
@@ -597,12 +1092,13 @@ void tecladoSudoku(unsigned char key, int x, int y)
 			break;		
 		case 'p':
 		case 'P':
-			op.solve(Csudoku_preenchido, 0);
-			Csudoku = Csudoku_preenchido;
-			glutTimerFunc(1,makedelay,1);
-			angulo_rotacao = 0;
-			game_over = 2;
-		
+			if(game_over == 0){
+				op.solve(Csudoku_preenchido, 0);
+				Csudoku = Csudoku_preenchido;
+				glutTimerFunc(1,makedelay,1);
+				angulo_rotacao = 0;
+				game_over = 2;
+			}
 			break;
 		case 13://Enter
 			if(game_over==1 || game_over == 2){
@@ -632,135 +1128,16 @@ void tecladoSudoku(unsigned char key, int x, int y)
 
 }
 
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  GerenciaMouse
- *  Description:  Função callback chamada para gerenciar eventos do mouse
- * =====================================================================================
- */
-void GerenciaMouse(int button, int state, int x, int y)
-{       
-	int i;
-
-	if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-	{
-		linha 	= (int)((x/du_largura)-3);
-		coluna  = (int)((y/du_altura)-1);
-		
-		printf("coluna[%d]linha[%d]\n", (int)((x/du_largura)-3),(int)((y/du_altura)-1)); 
-
-	}  
-	
-	glutPostRedisplay();
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  sudokuTecladoSpecHandle
- *  Description:  Função callback chamada para gerenciar eventos de teclas especiais
- * =====================================================================================
- */
- 
-void sudokuTecladoSpecHandle(int key, int x, int y)
-{	
-	if(key == GLUT_KEY_LEFT)
-	{	
-		if(game_over==0){
-			linha--;
-		
-			if(linha < 0)
-				linha = 8;
-		}	
-		else
-			box_select_fim = ++box_select_fim % 2;
-	}
-	else if(key == GLUT_KEY_RIGHT)
-	{
-		if(game_over==0)
-			linha = ++linha % 9;
-		else
-		{
-			box_select_fim--;
-			if(box_select_fim < 0)
-				box_select_fim = 1;
-		}
-	} 
-	else if(key == GLUT_KEY_UP)
-	{	
-		if(game_over==0){
-			coluna--;
-			if(coluna < 0)
-				coluna = 8;
-		}
-		else
-		{
-			box_select_fim--;
-			if(box_select_fim < 0)
-				box_select_fim = 1;
-		}
-	}
-	else if(key == GLUT_KEY_DOWN)
-	{
-		if(game_over==0)
-			coluna = ++coluna % 9;
-		else
-			box_select_fim = ++box_select_fim % 2;
-	} 
-
-	glutPostRedisplay();
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  Inicializa
- *  Description:  Fun��o respons�vel por inicializar par�mentros e vari�veis
- * =====================================================================================
- */
-void Inicializa (void)
-{   
-	glClearColor(0.7f, 0.7f, 0.7f, 0.7f);
-}
- 
 /****
- *		ROTINAS RELACIONADAS AO MENU INICIAL
+ *		FUNÇÕES DE DESENHO DE TELA
  ****/
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  escreveMenuTexto
- *  Description:  Função que desenah o texto do menu inicial
- * =====================================================================================
- */
  
-void escreveMenuTexto(int choos, double x, double y)
-{
-	char menu[3][10] = {
-				"JOGAR",
-				"CREDITOS",
-				"SAIR"
-			 };
-
-	glPushMatrix();
-
-	double delta[] = { 1.5, 1.5, 1.5 };
-
-	glTranslatef(x + largura_bloco / 2.0 - delta[choos], y - altura_bloco, 0.0f);
-	glScalef(0.005, 0.005, 0.0);
-	glLineWidth(2);
-
-	for (int i = 0; menu[choos][i] != '\0'; ++i)
-		glutStrokeCharacter(GLUT_STROKE_ROMAN, menu[choos][i]);
-
-	glPopMatrix();
-}
-
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  desenhaMenu 
  *  Description:  renderiza o menu principal 
  * =====================================================================================
  */
-
 void desenhaMenu()
 {
 	// Limpa a janela de visualiza��o com a cor  
@@ -771,7 +1148,9 @@ void desenhaMenu()
 
 	// Define a Viewport 1
 	glViewport(0, 0, largura, altura);
-
+	
+	sudokuNome();	
+	
 	glPushMatrix();
 	// desenha caixas de diálogo
 	for (int i = 0; i < menu_limit; i++) {
@@ -799,156 +1178,6 @@ void desenhaMenu()
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  desenhaMenuFimDeJogo
- *  Description:  Função que desenah o menu do fim do jogo
- * =====================================================================================
- */
-void desenhaMenuFimDeJogo()
-{
-	float st_x = 12.5;
-	float st_y = 7.5;
-	float largura_bloco = 3.0;
-	
-	glPushMatrix();
-
-	// desenha caixas de diálogo
-	for (int i = 0; i < 2; i++) {
-		glBegin(GL_QUADS);
-			if (i != box_select_fim)
-				glColor3f(PRETO);
-			else 
-				glColor3f(VERMELHO);
-
-			glVertex2f(st_x, st_y);
-			glVertex2f(st_x, st_y  - altura_bloco);
-			glVertex2f(st_x + largura_bloco, st_y - altura_bloco);
-			glVertex2f(st_x + largura_bloco, st_y); 
-		glEnd();
-
-		glColor3f(AZUL);
-		escreveMenuTextoFimDeJogo(i, st_x - 2.2, st_y + 0.3);
-
-		glTranslatef(0.0f, - (altura_bloco + space), 0.0f);
-	}
-
-	glPopMatrix();
-	glFlush();
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  escreveMenuTextoFimDeJogo
- *  Description:  Função que desenha o texto do menu do fim do jogo
- * =====================================================================================
- */
-void escreveMenuTextoFimDeJogo(int choos, double x, double y)
-{
-	char menu[2][10] = {
-				"NOVO JOGO",
-				"SAIR"
-			 };
-
-	glPushMatrix();
-
-	double delta[] = { 1.5, 1.5, 1.5 };
-
-	glTranslatef(x + largura_bloco / 2.0 - delta[choos], y - altura_bloco, 0.0f);
-	glScalef(0.003, 0.003, 0.0);
-	glLineWidth(2);
-
-	for (int i = 0; menu[choos][i] != '\0'; ++i)
-		glutStrokeCharacter(GLUT_STROKE_ROMAN, menu[choos][i]);
-
-	glPopMatrix();
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  menuTecladoSpecHandle 
- *  Description:  interação com o menu inicial e de dificuldades
- * =====================================================================================
- */
-void menuTecladoSpecHandle(int key, int x, int y)
-{
-	if (key == GLUT_KEY_UP && box_select > 0) 
-		box_select--;
-	else  if (key == GLUT_KEY_DOWN && box_select < (menu_limit - 1))
-		box_select++;
-	
-	glutPostRedisplay();
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  menuTecladoHandle 
- *  Description:  seleciona um item do menu 
- * =====================================================================================
- */
-void menuTecladoHandle(unsigned char key, int x, int y)
-{
-	if (key == 13) {
-		switch (box_select) {
-		case 0:
-			menu_limit = 3;
-			glutDisplayFunc(desenhaMenuDificuldade);
-			glutKeyboardFunc(menuDificuldadeTecladoHandle);
-			glutSpecialFunc(menuTecladoSpecHandle);
-			break;
-		case 1:
-			tr_y = -10;
-			glutDisplayFunc(desenhaCreditos);
-			glutKeyboardFunc(creditosTecladoHandle);
-			glutTimerFunc(1,creditosDelay,1);
-			//tr_y = 0;
-			// mostra os créditos [não implementado]
-			break;
-		case 2:
-			// mensagem de texto bonitinha e sair [não implementado]
-			exit(EXIT_SUCCESS);
-			break;
-		}
-	}
-	if (key == 27 || key == 'q' ||key == 'Q')
-		exit(EXIT_SUCCESS);
-
-	glutPostRedisplay();
-}
-
-/****
- *		ROTINAS RELACIONADAS AO MENU DE DIFICULDADE 
- ****/
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  escreveMenuDificuldadeTexto
- *  Description:  Função que desenha o texto do menu dificuldade
- * =====================================================================================
- */
- void escreveMenuDificuldadeTexto(int choos, double x, double y)
-{
-	char menu[3][10] = {
-				"FACIL",
-				"MEDIO",
-				"DIFICIL" };
-
-	glPushMatrix();
-
-	// não consegui centralizar esse texto ainda..
-	double delta[] = { 1., 1., 1. };
-
-	glTranslatef(x + largura_bloco / 2.0 - delta[choos], y - altura_bloco, 0.0f);
-
-	glScalef(0.005, 0.005, 0.0);
-	glLineWidth(2);
-
-	for (int i = 0; menu[choos][i] != '\0'; ++i)
-		glutStrokeCharacter(GLUT_STROKE_ROMAN, menu[choos][i]);
-
-	glPopMatrix();
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
  *         Name:  desenhaMenuDificuldade
  *  Description:  Função que desenha o menu de dificuldades
  * =====================================================================================
@@ -964,8 +1193,11 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 
 	// Define a Viewport 1
 	glViewport(0, 0, largura, altura);
+	
+	sudokuNome();	
 
 	glPushMatrix();
+	
 	// desenha caixas de diálogo
 	for (int i = 0; i < menu_limit; i++) {
 		glBegin(GL_QUADS);
@@ -992,240 +1224,50 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  menuDificuldadeTecladoHandle
- *  Description:  Função callback chamada para gerenciar eventos de teclas do menu de 
- *				  dificuldades
+ *         Name:  Desenha
+ *  Description:  Fun��o de callback de redesenho da janela de visualiza��o
  * =====================================================================================
  */
- 
-void menuDificuldadeTecladoHandle(unsigned char key, int x, int y)
+void Desenha(void)
 {
-	int dificuldade;
-
-	if (key == 13) {
-		switch (box_select) {
-		case 0:
-			dificuldade = FACIL;
-			break;
-		case 1:
-			// mostra os créditos [não implementado]
-			dificuldade = MEDIO;
-			break;
-		case 2:
-			// mensagem de texto bonitinha e sair [não implementado]
-			dificuldade = DIFICIL;
-			break;
-		}
-		
-		createGLUTMenus();
-		setaValores(dificuldade);
-		glutSpecialFunc(sudokuTecladoSpecHandle);
-		glutDisplayFunc(Desenha);
-		glutKeyboardFunc(tecladoSudoku);
-	}
-	else if (key == 27 || key == 'q' ||key == 'Q')
-		exit(EXIT_SUCCESS);
-
-	glutPostRedisplay();
-}
-
-/****
- *		ROTINAS RELACIONADAS AOS CRÉDITOS 
- ****/
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  creditosDelay
- *  Description:  Função que faz a animação dos créditos
- * =====================================================================================
- */
- void creditosDelay(int value)
-{
-	tr_y += .01;
-	if (tr_y > 0.) return;
-	glutPostRedisplay();
-	glutTimerFunc(12.5, creditosDelay, 1);
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  printStrokeString
- *  Description:  Função que recebe uma string e desenah na tela
- * =====================================================================================
- */
- void printStrokeString(char *s)
-{
-
-	for (int i = 0; s[i] != '\0'; ++i)
-		glutStrokeCharacter(GLUT_STROKE_ROMAN, s[i]);
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  desenhaCreditos
- *  Description:  Função que desenha o texto dos créditos
- * =====================================================================================
- */
- void desenhaCreditos()
-{
-	char author[3][50] = {
-		"Gustavo Marques",
-		"Jardel Lima",
-		"Leonardo Cavalcante do Prado"
-	},
-	
-	email[3][50] = {
-		"gutodisse@gmail.com",
-		"jardelribeiro.lima@gmail.com",
-		"leolleo.comp@gmail.com"
-	};
-	
+	// Limpa a janela de visualiza��o com a cor  
+	// de fundo definida previamente
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	// Define a Viewport 1
 	glViewport(0, 0, largura, altura);
-
-	glPushMatrix();
-	glTranslatef(0,tr_y,0);
-
-	glPushMatrix();
-
-	glTranslatef(4,8.8,0);
-	glScalef(8,1,0);
-
-	glBegin(GL_QUADS);
-		glColor3f(0.7f, 0.7f, 0.7f);
-		glVertex2f(0,0);
-		glVertex2f(1,0);
-		glColor3f(0.4, 0.4, 0.4);
-		glVertex2f(1,1);
-		glVertex2f(0,1);
-	glEnd();
-
-	glPopMatrix();
-
-	glPushMatrix();
-		glTranslatef(win_lagura / 2. - 1.5, win_altura / 2. + 3, 0);
-		glScalef(0.005, 0.005, 0);
-		glLineWidth(4);
-		glColor3f(AZUL);
-		printStrokeString("Creditos");	
-	glPopMatrix();
-
-
-	for (int k = 0; k < 3; ++k) {
-		glPushMatrix();
-		glTranslatef(win_lagura / 2. - 3.5, win_altura / 2. - k, 0);
-		glLineWidth(2);
-		glScalef(0.002, 0.002, 0.0);
-		glColor3f(AZUL);
-		printStrokeString(author[k]);
-		printStrokeString(", ");
-		glColor3f(VERMELHO);
-		printStrokeString(email[k]);
-		glPopMatrix();
-	}
-
-	glPushMatrix();
-		glTranslatef(win_lagura / 2. - 1.25, win_altura / 2. - 3, 0);
-		glScalef(0.002, 0.002, 0);
-		glLineWidth(2);
-		glColor3f(AZUL);
-		printStrokeString("ESC - voltar");	
-	glPopMatrix();
-	glPopMatrix();
 	
+	sudokuNome();	
+	
+	// DESENHA AS LINHAS DA TABELA
+	DesenhaTabela();
+	
+	// DESENHA OS NUMEROS DA MATRIX SUDOKU
+	DesenhaNumeros();
+	
+	if(game_over==1 || game_over == 2){
+		desenhaMenuFimDeJogo();
+
+		if(game_over == 1)
+			vcGanhou("Voce Conseguiu!!!");
+	}
+		
+	legenda("Atalhos do Teclado: 'q' ou 'Esc'- Sair do Jogo  |  'p' - Resolver Sudoku  |  'h' - Hint.");
+
+	// Executa os comandos OpenGL 
 	glFlush();
 }
 
 /* 
  * ===  FUNCTION  ======================================================================
- *         Name:  Teclado
- *  Description:  Função callback chamada para gerenciar eventos de teclas da tela de 
- *				  créditos
+ *         Name:  Inicializa
+ *  Description:  Fun��o respons�vel por inicializar par�mentros e vari�veis
  * =====================================================================================
  */
-void creditosTecladoHandle(unsigned char key, int x, int y)
-{
-	if (key == 27) { // esc
-		glutDisplayFunc(desenhaMenu);	
-		glutKeyboardFunc(menuTecladoHandle);
-	}
-
-	glutPostRedisplay();
+void Inicializa (void)
+{   
+	glClearColor(0.7f, 0.7f, 0.7f, 0.7f);
 }
-
-/****
- *		SUDOKU LÓGICA E LÓGICA PESADA	
- ****/
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  setaValores 
- *  Description:  seleciona um item do menu 
- * =====================================================================================
- */
-void setaValores(int dificuldade)
-{
-	SudokuOpr op(dificuldade);
-	op.randomGen(Csudoku);
-	Csudoku_preenchido = Csudoku;
-    Csudoku_resolvido  = Csudoku;
-    op.solve(Csudoku_resolvido, 0);
-
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  processMenuEvents
- *  Description:  Função que processa os eventos do menu do mouse
- * =====================================================================================
- */
-void processMenuEvents(int option) {
-
-	switch (option) {
-		case HINT :
-			if(game_over==0)
-				hintNumero();
-			break;
-		case RESOLVER :
-			if(game_over==0)
-				autoCompletar();
-			break;
-		case NOVO_JOGO :
-				novoJogo();
-			break;
-		case SAIR :
-			exit(0);
-			break;
-	}
-	
-	DesenhaNumeros();
-	glutPostRedisplay();
-}
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  createGLUTMenus
- *  Description:  Função que cria o menu do mouse
- * =====================================================================================
- */
-void createGLUTMenus() {
-
-		// create the menu and
-		// tell glut that "processMenuEvents" will
-		// handle the events
-		menu = glutCreateMenu(processMenuEvents);
-
-		//add entries to our menu
-		glutAddMenuEntry("Hint",HINT);
-		glutAddMenuEntry("Resolver",RESOLVER);
-		glutAddMenuEntry("Novo Jogo",NOVO_JOGO);
-		glutAddMenuEntry("Sair",SAIR);
-
-		// attach the menu to the right button
-		glutAttachMenu(GLUT_RIGHT_BUTTON);
-
-}
-
 
 /* 
  * ===  FUNCTION  ======================================================================
