@@ -1009,6 +1009,12 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 {
 	int dificuldade;
 
+	if (key == 27) {
+		glutDisplayFunc(desenhaMenu);
+		glutKeyboardFunc(menuTecladoHandle);
+		glutSpecialFunc(menuTecladoSpecHandle);
+	}
+	
 	if (key == 13) {
 		switch (box_select) {
 		case 0:
@@ -1030,7 +1036,7 @@ void menuTecladoHandle(unsigned char key, int x, int y)
 		glutDisplayFunc(Desenha);
 		glutKeyboardFunc(tecladoSudoku);
 	}
-	else if (key == 27 || key == 'q' ||key == 'Q')
+	else if (key == 'q' ||key == 'Q')
 		exit(EXIT_SUCCESS);
 
 	glutPostRedisplay();
@@ -1116,6 +1122,10 @@ void tecladoSudoku(unsigned char key, int x, int y)
 			}
 			break;
 		case 27://Esc
+			glutDisplayFunc(desenhaMenuDificuldade);
+			glutKeyboardFunc(menuDificuldadeTecladoHandle);
+			glutSpecialFunc(menuTecladoSpecHandle);
+			break;
 		case 'q':
 		case 'Q':
 			exit(0);
@@ -1252,7 +1262,7 @@ void Desenha(void)
 			vcGanhou("Voce Conseguiu!!!");
 	}
 		
-	legenda("Atalhos do Teclado: 'q' ou 'Esc'- Sair do Jogo  |  'p' - Resolver Sudoku  |  'h' - Hint.");
+	legenda("Atalhos do Teclado: 'q' - SAIR | 'Esc'- voltar  |  'p' - Resolver Sudoku  |  'h' - Hint.");
 
 	// Executa os comandos OpenGL 
 	glFlush();
