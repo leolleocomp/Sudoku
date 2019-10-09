@@ -1333,6 +1333,6 @@ int main(int argc, char** argv)
  
 	// Inicia o processamento e aguarda intera��es do usu�rio
 	glutMainLoop();
- 
+		printf("by\n");
 	return 0;
 }
